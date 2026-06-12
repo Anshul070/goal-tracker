@@ -1,0 +1,1270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>12-Week Roadmap — Anshul Saini</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#0E1117;
+  --bg-elev:#161B24;
+  --bg-elev-2:#1E2530;
+  --bg-elev-3:#262E3C;
+  --border:#2A3140;
+  --border-soft:#1F2530;
+  --text:#E6E9F0;
+  --text-dim:#8A93A6;
+  --text-faint:#545D70;
+  --gold:#F2B84B;
+  --gold-soft:rgba(242,184,75,0.14);
+  --purple:#A78BFA;
+  --purple-soft:rgba(167,139,250,0.14);
+  --teal:#45D6C4;
+  --teal-soft:rgba(69,214,196,0.14);
+  --coral:#FF8B6B;
+  --coral-soft:rgba(255,139,107,0.14);
+  --green:#5EE6A0;
+  --red:#FF6B6B;
+  --radius:14px;
+  --radius-sm:9px;
+  --font-display:-apple-system,"Segoe UI",system-ui,sans-serif;
+  --font-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font-display);
+  -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+}
+.app{max-width:1080px;margin:0 auto;padding:0 20px 80px;}
+
+/* ---------- Topbar ---------- */
+.topbar{
+  position:sticky; top:0; z-index:50;
+  display:flex; align-items:center; justify-content:space-between; gap:16px;
+  flex-wrap:wrap;
+  padding:18px 0 14px;
+  background:linear-gradient(180deg, var(--bg) 70%, rgba(14,17,23,0.85));
+  backdrop-filter:blur(6px);
+  border-bottom:1px solid var(--border-soft);
+}
+.brand{display:flex; align-items:center; gap:12px;}
+.brand-mark{
+  width:38px; height:38px; border-radius:10px;
+  background:linear-gradient(135deg, var(--purple), var(--teal));
+  display:flex; align-items:center; justify-content:center;
+  font-weight:700; font-size:16px; color:#0E1117; flex-shrink:0;
+  font-family:var(--font-mono);
+}
+.brand-title{font-size:16px; font-weight:700; letter-spacing:-0.01em;}
+.brand-sub{font-size:11px; color:var(--text-dim); letter-spacing:0.06em; text-transform:uppercase; margin-top:1px;}
+
+.stats-strip{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+.level-chip{
+  display:flex; align-items:center; gap:8px;
+  background:var(--bg-elev); border:1px solid var(--border);
+  border-radius:999px; padding:6px 14px 6px 8px;
+}
+.level-chip .lv-icon{
+  width:24px; height:24px; border-radius:50%; background:var(--gold-soft);
+  display:flex; align-items:center; justify-content:center; font-size:13px;
+}
+.level-chip .lv-num{font-family:var(--font-mono); font-size:11px; color:var(--gold); font-weight:700;}
+.level-chip .lv-title{font-size:12px; font-weight:600; color:var(--text);}
+
+.xp-track{
+  position:relative; width:180px; height:26px;
+  background:var(--bg-elev); border:1px solid var(--border); border-radius:999px;
+  overflow:hidden;
+}
+.xp-fill{
+  position:absolute; inset:0; width:0%;
+  background:linear-gradient(90deg, var(--purple), var(--teal));
+  border-radius:999px; transition:width 0.5s ease;
+}
+.xp-label{
+  position:relative; z-index:1; display:flex; align-items:center; justify-content:center;
+  height:100%; font-family:var(--font-mono); font-size:10.5px; font-weight:600;
+  color:var(--text); letter-spacing:0.02em; mix-blend-mode:difference;
+}
+.streak-chip{
+  display:flex; align-items:center; gap:6px;
+  background:var(--bg-elev); border:1px solid var(--border);
+  border-radius:999px; padding:6px 14px; font-size:13px; font-weight:700;
+  font-family:var(--font-mono); color:var(--gold);
+}
+
+/* ---------- Tabs ---------- */
+.tabs{
+  display:flex; gap:6px; overflow-x:auto; padding:14px 0 4px;
+  scrollbar-width:none;
+}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{
+  flex-shrink:0; padding:7px 14px; border-radius:999px; font-size:12.5px; font-weight:600;
+  background:transparent; border:1px solid var(--border); color:var(--text-dim);
+  cursor:pointer; transition:all 0.15s; white-space:nowrap;
+  font-family:var(--font-mono);
+}
+.tab:hover{color:var(--text); border-color:var(--text-faint);}
+.tab.active{background:var(--bg-elev-2); color:var(--text); border-color:var(--purple);}
+.tab .tick{color:var(--green); margin-left:4px;}
+
+/* ---------- Cards / grid ---------- */
+.grid{display:grid; gap:14px;}
+.grid-4{grid-template-columns:repeat(4,1fr);}
+.grid-2{grid-template-columns:1fr 1fr;}
+@media (max-width:760px){
+  .grid-4{grid-template-columns:repeat(2,1fr);}
+  .grid-2{grid-template-columns:1fr;}
+}
+.card{
+  background:var(--bg-elev); border:1px solid var(--border-soft);
+  border-radius:var(--radius); padding:16px 18px;
+}
+.card-label{font-size:11px; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.08em; font-weight:600; margin-bottom:6px;}
+.card-value{font-family:var(--font-mono); font-size:26px; font-weight:700; letter-spacing:-0.01em;}
+.card-sub{font-size:11.5px; color:var(--text-faint); margin-top:4px;}
+.accent-purple{color:var(--purple);}
+.accent-teal{color:var(--teal);}
+.accent-gold{color:var(--gold);}
+.accent-coral{color:var(--coral);}
+.accent-green{color:var(--green);}
+
+.section-title{
+  font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em;
+  color:var(--text-dim); margin:28px 0 12px;
+  display:flex; align-items:center; gap:8px;
+}
+.section-title .dot{width:6px; height:6px; border-radius:50%; flex-shrink:0;}
+
+/* ---------- Heatmap ---------- */
+.heatmap-card{overflow-x:auto;}
+.heatmap-wrap{display:flex; gap:3px; min-width:max-content; padding-bottom:4px;}
+.heatmap-col{display:flex; flex-direction:column; gap:3px;}
+.heatmap-cell{
+  width:12px; height:12px; border-radius:3px; background:var(--bg-elev-2);
+  border:1px solid var(--border-soft);
+}
+.heatmap-legend{display:flex; align-items:center; gap:6px; margin-top:10px; font-size:11px; color:var(--text-faint);}
+.heatmap-legend .heatmap-cell{width:10px; height:10px;}
+
+/* ---------- Next up ---------- */
+.nextup{
+  display:flex; align-items:center; gap:14px; padding:16px 18px;
+  background:linear-gradient(135deg, var(--purple-soft), var(--teal-soft));
+  border:1px solid var(--border); border-radius:var(--radius);
+}
+.nextup-icon{
+  width:42px; height:42px; border-radius:10px; flex-shrink:0;
+  background:var(--bg-elev); display:flex; align-items:center; justify-content:center;
+  font-size:18px; border:1px solid var(--border);
+}
+.nextup-body{flex:1; min-width:0;}
+.nextup-label{font-size:10.5px; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-dim); font-weight:700; margin-bottom:2px;}
+.nextup-text{font-size:14px; font-weight:600;}
+.nextup-meta{font-size:12px; color:var(--text-dim); margin-top:2px;}
+.nextup-btn{
+  flex-shrink:0; background:var(--bg-elev-2); border:1px solid var(--border);
+  color:var(--text); font-family:var(--font-mono); font-size:11px; font-weight:700;
+  padding:8px 14px; border-radius:8px; cursor:pointer; transition:all 0.15s;
+}
+.nextup-btn:hover{border-color:var(--teal); color:var(--teal);}
+
+/* ---------- Charts ---------- */
+.chart-card{height:260px; display:flex; flex-direction:column;}
+.chart-card canvas{flex:1; max-height:210px;}
+
+/* ---------- Week view ---------- */
+.week-head{margin-bottom:18px;}
+.week-num{
+  font-family:var(--font-mono); font-size:12px; font-weight:700; color:var(--purple);
+  letter-spacing:0.08em; text-transform:uppercase; margin-bottom:4px;
+}
+.week-title{font-size:22px; font-weight:700; letter-spacing:-0.01em; margin-bottom:6px;}
+.week-intro{font-size:13.5px; color:var(--text-dim); line-height:1.6; max-width:680px;}
+.week-progress{
+  margin-top:14px; display:flex; align-items:center; gap:10px;
+}
+.week-progress-track{
+  flex:1; height:8px; border-radius:999px; background:var(--bg-elev-2); overflow:hidden; border:1px solid var(--border-soft);
+}
+.week-progress-fill{height:100%; background:linear-gradient(90deg, var(--purple), var(--teal)); border-radius:999px; transition:width 0.4s ease;}
+.week-progress-label{font-family:var(--font-mono); font-size:12px; color:var(--text-dim); white-space:nowrap;}
+
+.task-group{background:var(--bg-elev); border:1px solid var(--border-soft); border-radius:var(--radius); overflow:hidden; margin-bottom:14px;}
+.task-group-head{
+  padding:11px 16px; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.07em;
+  border-bottom:1px solid var(--border-soft); display:flex; align-items:center; gap:8px;
+}
+.task-row{
+  display:flex; align-items:flex-start; gap:12px; padding:11px 16px;
+  border-bottom:1px solid var(--border-soft); transition:background 0.12s;
+}
+.task-row:last-child{border-bottom:none;}
+.task-row:hover{background:var(--bg-elev-2);}
+.task-row.done .task-text{color:var(--text-faint); text-decoration:line-through;}
+.task-row.done{opacity:0.65;}
+
+.task-day{
+  font-family:var(--font-mono); font-size:10.5px; color:var(--text-faint);
+  text-transform:uppercase; min-width:64px; padding-top:2px; flex-shrink:0;
+}
+.checkbox{
+  appearance:none; width:18px; height:18px; border-radius:6px; border:1.5px solid var(--border);
+  background:var(--bg-elev-2); cursor:pointer; flex-shrink:0; margin-top:1px;
+  display:flex; align-items:center; justify-content:center; transition:all 0.15s;
+}
+.checkbox:checked{background:var(--teal); border-color:var(--teal);}
+.checkbox:checked::after{content:"✓"; color:#0E1117; font-size:12px; font-weight:900; line-height:1;}
+.checkbox:hover{border-color:var(--teal);}
+
+.task-body{flex:1; min-width:0;}
+.task-text{font-size:13.5px; line-height:1.5;}
+.task-tags{display:flex; gap:6px; margin-top:5px; flex-wrap:wrap;}
+.tag{
+  font-family:var(--font-mono); font-size:10px; font-weight:700; padding:2px 8px;
+  border-radius:5px; letter-spacing:0.02em;
+}
+.tag-Easy{background:rgba(94,230,160,0.14); color:var(--green);}
+.tag-Medium{background:var(--gold-soft); color:var(--gold);}
+.tag-Hard{background:rgba(255,107,107,0.14); color:var(--red);}
+.tag-Review,.tag-Reading{background:var(--bg-elev-2); color:var(--text-dim);}
+.tag-HLD,.tag-LLD{background:var(--purple-soft); color:var(--purple);}
+.tag-pattern{background:var(--bg-elev-2); color:var(--text-dim);}
+.task-xp{
+  font-family:var(--font-mono); font-size:11px; font-weight:700; color:var(--text-faint);
+  flex-shrink:0; padding-top:2px; white-space:nowrap;
+}
+.task-row.done .task-xp{color:var(--green);}
+
+.ai-group .task-group-head{background:var(--teal-soft); color:var(--teal);}
+.lb-group .task-group-head{background:var(--coral-soft); color:var(--coral);}
+.dsa-group .task-group-head{background:var(--purple-soft); color:var(--purple);}
+
+.note-row{
+  display:flex; align-items:center; gap:12px; padding:11px 16px;
+  border-bottom:1px solid var(--border-soft); color:var(--text-faint); font-size:12.5px; font-style:italic;
+}
+.note-row:last-child{border-bottom:none;}
+
+.resources-list{list-style:none; margin:0; padding:0;}
+.resources-list li{
+  font-size:13px; color:var(--text-dim); padding:8px 0; border-bottom:1px solid var(--border-soft);
+  display:flex; align-items:center; gap:8px;
+}
+.resources-list li:last-child{border-bottom:none;}
+.resources-list li::before{content:"↗"; color:var(--teal); font-family:var(--font-mono);}
+
+/* ---------- Achievements ---------- */
+.ach-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:12px;}
+@media (max-width:760px){.ach-grid{grid-template-columns:repeat(2,1fr);}}
+.ach-card{
+  background:var(--bg-elev); border:1px solid var(--border-soft); border-radius:var(--radius);
+  padding:16px; text-align:center; transition:all 0.2s;
+}
+.ach-card.unlocked{border-color:var(--gold); background:linear-gradient(135deg, var(--gold-soft), transparent);}
+.ach-card.locked{opacity:0.4; filter:grayscale(0.6);}
+.ach-icon{font-size:30px; margin-bottom:8px;}
+.ach-title{font-size:12.5px; font-weight:700; margin-bottom:4px;}
+.ach-desc{font-size:11px; color:var(--text-dim); line-height:1.4;}
+
+/* ---------- Overview table ---------- */
+.overview-table{width:100%; border-collapse:collapse; font-size:12.5px;}
+.overview-table th{
+  text-align:left; font-size:10.5px; text-transform:uppercase; letter-spacing:0.06em;
+  color:var(--text-dim); padding:8px 10px; border-bottom:1px solid var(--border);
+}
+.overview-table td{padding:9px 10px; border-bottom:1px solid var(--border-soft); vertical-align:middle;}
+.overview-table tr:hover td{background:var(--bg-elev-2); cursor:pointer;}
+.ov-bar{width:90px; height:6px; border-radius:999px; background:var(--bg-elev-2); overflow:hidden; border:1px solid var(--border-soft);}
+.ov-bar-fill{height:100%; background:linear-gradient(90deg, var(--purple), var(--teal));}
+
+/* ---------- Toast ---------- */
+.toast-wrap{position:fixed; bottom:20px; right:20px; display:flex; flex-direction:column; gap:8px; z-index:100;}
+.toast{
+  background:var(--bg-elev-2); border:1px solid var(--border); border-radius:10px;
+  padding:10px 16px; font-size:12.5px; font-weight:600; display:flex; align-items:center; gap:8px;
+  box-shadow:0 8px 24px rgba(0,0,0,0.4);
+  animation:toast-in 0.25s ease, toast-out 0.25s ease 2.2s forwards;
+}
+.toast.gold{border-color:var(--gold); color:var(--gold);}
+@keyframes toast-in{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);}}
+@keyframes toast-out{from{opacity:1;} to{opacity:0; transform:translateY(-8px);}}
+
+/* ---------- Footer ---------- */
+.footer{margin-top:40px; padding-top:16px; border-top:1px solid var(--border-soft); display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;}
+.footer-text{font-size:11.5px; color:var(--text-faint);}
+.reset-btn{
+  background:transparent; border:1px solid var(--border); color:var(--text-faint);
+  font-size:11px; font-family:var(--font-mono); padding:6px 12px; border-radius:8px; cursor:pointer;
+}
+.reset-btn:hover{border-color:var(--red); color:var(--red);}
+
+/* ---------- Loading ---------- */
+.loading{padding:60px 0; text-align:center; color:var(--text-dim); font-family:var(--font-mono); font-size:13px;}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">12</div>
+      <div>
+        <div class="brand-title">12-Week Roadmap</div>
+        <div class="brand-sub">DSA · Agentic AI · Letbex</div>
+      </div>
+    </div>
+    <div class="stats-strip" id="statsStrip"></div>
+  </header>
+  <nav class="tabs" id="tabs"></nav>
+  <main id="view"><div class="loading">Loading your progress…</div></main>
+  <div class="footer">
+    <div class="footer-text" id="footerText">Progress saved automatically.</div>
+    <button class="reset-btn" id="resetBtn">Reset all progress</button>
+  </div>
+</div>
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+/* =========================================================
+   DATA
+   ========================================================= */
+const ROADMAP = [
+{ num:1, title:"Arrays & Hashing",
+  intro:"Foundation patterns: hashmaps for O(1) lookups, prefix sums, and Kadane's algorithm. Every problem reduces to 'can I avoid the nested loop with a hashmap or a single pass?'",
+  days:[
+    {day:"Monday", items:[{n:"Two Sum",d:"Easy",p:"Hashing"},{n:"Contains Duplicate",d:"Easy",p:"Hashing"}]},
+    {day:"Tuesday", items:[{n:"Valid Anagram",d:"Easy",p:"Hashing"},{n:"Group Anagrams",d:"Medium",p:"Hashing"}]},
+    {day:"Wednesday", items:[{n:"Top K Frequent Elements",d:"Medium",p:"Hashing + Heap"},{n:"Product of Array Except Self",d:"Medium",p:"Prefix/Suffix Product"}]},
+    {day:"Thursday", items:[{n:"Longest Consecutive Sequence",d:"Medium",p:"Hashing"},{n:"Valid Sudoku",d:"Medium",p:"Hashing"}]},
+    {day:"Friday", items:[{n:"Best Time to Buy and Sell Stock",d:"Easy",p:"Single Pass"},{n:"Maximum Subarray",d:"Medium",p:"Kadane's Algorithm"}]},
+    {day:"Saturday", items:[{n:"Subarray Sum Equals K",d:"Medium",p:"Prefix Sum + Hashing"},{n:"Maximum Subarray (timed retry)",d:"Medium",p:"Kadane's Algorithm"}]},
+    {day:"Sunday", items:[{n:"Revision: redo Two Sum + Group Anagrams from scratch, no notes",d:"Review",p:"Flashcards"}]},
+  ],
+  aiTitle:"Foundations (already complete)",
+  ai:[
+    "Deploy your streaming chat app to Vercel (vercel --prod) if not yet live.",
+    "Push the repo to GitHub with a README explaining the system prompt toggle.",
+    "Spend 30 min experimenting with temperature (0.2 vs 0.9) and note the difference — builds intuition for Week 5+.",
+  ],
+  letbex:[
+    "10 Instagram DMs/day to the refined target profile (500-3,000 followers, no/bad website, photographers/coaches/consultants, Punjab/Haryana/NCR).",
+    "Follow up with Vipul — get answers on pages/contact form/branding/style, then send a quote (₹8,000-₹15,000 based on scope).",
+  ],
+  resources:["Striver's A2Z DSA Sheet — Arrays & Hashing","NeetCode — Arrays & Hashing playlist (YouTube)"],
+},
+{ num:2, title:"Two Pointers & Sliding Window",
+  intro:"Two pointers shrink O(n²) brute-force comparisons to O(n). Sliding window extends this to 'find the best contiguous subarray/substring' problems.",
+  days:[
+    {day:"Monday", items:[{n:"Valid Palindrome",d:"Easy",p:"Two Pointers"},{n:"Two Sum II (sorted array)",d:"Medium",p:"Two Pointers"}]},
+    {day:"Tuesday", items:[{n:"3Sum",d:"Medium",p:"Two Pointers + Sorting"},{n:"Container With Most Water",d:"Medium",p:"Two Pointers"}]},
+    {day:"Wednesday", items:[{n:"Longest Substring Without Repeating Characters",d:"Medium",p:"Sliding Window"},{n:"Longest Repeating Character Replacement",d:"Medium",p:"Sliding Window"}]},
+    {day:"Thursday", items:[{n:"Minimum Window Substring",d:"Hard",p:"Sliding Window"},{n:"Find All Anagrams in a String",d:"Medium",p:"Sliding Window"}]},
+    {day:"Friday", items:[{n:"Permutation in String",d:"Medium",p:"Sliding Window"},{n:"Max Consecutive Ones III",d:"Medium",p:"Sliding Window"}]},
+    {day:"Saturday", items:[{n:"Trapping Rain Water",d:"Hard",p:"Two Pointers"},{n:"Sliding Window Maximum",d:"Hard",p:"Sliding Window + Deque"}]},
+    {day:"Sunday", items:[{n:"Revision: redo Minimum Window Substring + Trapping Rain Water",d:"Review",p:"Flashcards"}]},
+  ],
+  aiTitle:"Embeddings & Vector Databases",
+  ai:[
+    "Learn what embeddings are and how cosine similarity measures semantic closeness.",
+    "Set up a free Pinecone index OR enable pgvector on Supabase (pgvector is reusable for CenterX later).",
+    "Embed 5-10 sample text snippets via the OpenAI/Google embeddings API, store them, and query for 'most similar' to a new snippet.",
+    "Goal: be comfortable with the embed → store → query loop — foundation for next week's RAG project.",
+  ],
+  letbex:[
+    "Continue 10 DMs/day — never let outreach drop to zero.",
+    "If Vipul has responded with scope, send the formal quote and request 50% advance before starting.",
+  ],
+  resources:["Pinecone — 'What are vector embeddings?' (YouTube, 10min)","Supabase pgvector guide","Striver's A2Z — Sliding Window & Two Pointers"],
+},
+{ num:3, title:"Binary Search",
+  intro:"Binary search isn't just 'find element in sorted array' — it's 'search on the answer space' for optimization problems (Koko Eating Bananas, etc.).",
+  days:[
+    {day:"Monday", items:[{n:"Binary Search",d:"Easy",p:"Classic Binary Search"},{n:"Search Insert Position",d:"Easy",p:"Classic Binary Search"}]},
+    {day:"Tuesday", items:[{n:"Search a 2D Matrix",d:"Medium",p:"Binary Search on Grid"},{n:"Find First and Last Position of Element in Sorted Array",d:"Medium",p:"Binary Search Boundaries"}]},
+    {day:"Wednesday", items:[{n:"Search in Rotated Sorted Array",d:"Medium",p:"Rotated Binary Search"},{n:"Find Minimum in Rotated Sorted Array",d:"Medium",p:"Rotated Binary Search"}]},
+    {day:"Thursday", items:[{n:"Koko Eating Bananas",d:"Medium",p:"Binary Search on Answer"},{n:"Time Based Key-Value Store",d:"Medium",p:"Binary Search + Design"}]},
+    {day:"Friday", items:[{n:"Find Peak Element",d:"Medium",p:"Binary Search on Answer"},{n:"Capacity To Ship Packages Within D Days",d:"Medium",p:"Binary Search on Answer"}]},
+    {day:"Saturday", items:[{n:"Median of Two Sorted Arrays",d:"Hard",p:"Binary Search (partition)"}]},
+    {day:"Sunday", items:[{n:"Revision: redo Search in Rotated Sorted Array + Koko Eating Bananas",d:"Review",p:"Flashcards"}]},
+  ],
+  aiTitle:"RAG Pipeline Part 1 — 'Chat with your PDF'",
+  ai:[
+    "Learn document loaders and chunking strategies (fixed-size vs recursive vs semantic).",
+    "Build the ingestion half: load a PDF (`pdf-parse`), split into chunks with LangChain.js text splitters, embed each chunk, store in your vector DB.",
+    "By end of week: a script that takes any PDF and populates your vector store with searchable chunks.",
+    "Use your resume PDF or the Letbex roadmap doc as test input — makes debugging more intuitive.",
+  ],
+  letbex:[
+    "10 DMs/day continues.",
+    "If Vipul's project has started, keep outreach running in parallel — pipeline must never go to zero.",
+  ],
+  resources:["LangChain.js RAG tutorial — document loaders","Greg Kamradt's chunking strategy notebook (GitHub)","Striver's A2Z — Binary Search"],
+},
+{ num:4, title:"Linked Lists",
+  intro:"Linked list problems test pointer manipulation discipline — dummy nodes, fast/slow pointers, and in-place reversal. LRU Cache previews LLD interviews in Week 12.",
+  days:[
+    {day:"Monday", items:[{n:"Reverse Linked List",d:"Easy",p:"In-place Reversal"},{n:"Merge Two Sorted Lists",d:"Easy",p:"Two Pointers"}]},
+    {day:"Tuesday", items:[{n:"Reorder List",d:"Medium",p:"Fast/Slow + Reversal"},{n:"Remove Nth Node From End of List",d:"Medium",p:"Fast/Slow Pointers"}]},
+    {day:"Wednesday", items:[{n:"Copy List with Random Pointer",d:"Medium",p:"Hashing + Linked List"},{n:"Linked List Cycle",d:"Easy",p:"Floyd's Cycle Detection"}]},
+    {day:"Thursday", items:[{n:"Find the Duplicate Number",d:"Medium",p:"Floyd's Cycle Detection"},{n:"Add Two Numbers",d:"Medium",p:"Linked List Simulation"}]},
+    {day:"Friday", items:[{n:"LRU Cache",d:"Medium",p:"Design + Hashmap + DLL"}]},
+    {day:"Saturday", items:[{n:"Merge k Sorted Lists",d:"Hard",p:"Divide & Conquer / Heap"}]},
+    {day:"Sunday", items:[{n:"Revision: redo LRU Cache + Merge k Sorted Lists from scratch",d:"Review",p:"Flashcards"}]},
+  ],
+  aiTitle:"RAG Pipeline Part 2 — Query, Deploy & Test",
+  ai:[
+    "Build the retrieval half: embed the user question, retrieve top-K similar chunks, pass them as context to the LLM.",
+    "Wire into a Next.js UI similar to Week 1's chat app (reuse most of that code — add the retrieval step before streamText).",
+    "Deploy 'Chat with your PDF' to Vercel and test it with 3-5 real questions about the uploaded document.",
+    "Push to GitHub with a README explaining the RAG architecture — this project is now portfolio-ready.",
+  ],
+  letbex:[
+    "10 DMs/day continues.",
+    "Build the second niche demo: a coach/consultant landing page — widens outreach beyond photographers.",
+  ],
+  resources:["LangChain.js RAG tutorial — retrieval & generation","Striver's A2Z — Linked Lists","NeetCode — Linked List playlist"],
+},
+{ num:5, title:"Stacks & Queues + Agentic AI Begins",
+  intro:"Lighter DSA week — only 6 problems — because this week's AI track (agentic AI, 1 of 3) is the highest-priority material in the entire plan. Don't let stacks eat into AI time.",
+  days:[
+    {day:"Monday", items:[{n:"Valid Parentheses",d:"Easy",p:"Stack"},{n:"Min Stack",d:"Medium",p:"Stack (Design)"}]},
+    {day:"Tuesday", items:[{n:"Evaluate Reverse Polish Notation",d:"Medium",p:"Stack"},{n:"Generate Parentheses",d:"Medium",p:"Backtracking + Stack"}]},
+    {day:"Wednesday", items:[{n:"AI block — no new DSA problem today",d:"—",p:"—"}]},
+    {day:"Thursday", items:[{n:"Daily Temperatures",d:"Medium",p:"Monotonic Stack"}]},
+    {day:"Friday", items:[{n:"AI block — no new DSA problem today",d:"—",p:"—"}]},
+    {day:"Saturday", items:[{n:"Car Fleet",d:"Medium",p:"Monotonic Stack"},{n:"Largest Rectangle in Histogram",d:"Hard",p:"Monotonic Stack"}]},
+    {day:"Sunday", items:[{n:"Revision: redo Min Stack + Daily Temperatures from scratch",d:"Review",p:"Flashcards"}]},
+  ],
+  aiTitle:"Agentic AI 1/3 — Tool Use & ReAct",
+  ai:[
+    "Learn function calling / tool use with OpenAI/Anthropic API (or Vercel AI SDK's `tool()` helper).",
+    "Learn the ReAct pattern: Reason → Act → Observe → repeat — the loop every agent runs.",
+    "Build your first single-tool agent: give it ONE tool (calculator or weather lookup) and have it decide when to call it vs answer directly.",
+    "Most important AI week in the entire plan — agentic AI is the highest-demand specialization in India for 2026. Don't rush it.",
+  ],
+  letbex:[
+    "10 DMs/day continues.",
+    "Send the coach/consultant demo (built last week) to 2-3 relevant prospects.",
+  ],
+  resources:["OpenAI function calling guide","'LangChain Agents explained' — Patrick Loeber (YouTube)","Striver's A2Z — Stack & Queue"],
+},
+{ num:6, title:"Binary Trees & BST + Agentic AI Continues",
+  intro:"Trees are mostly DFS/BFS template recognition. Once the traversal templates are drilled, the rest is variations on the same theme. Lighter DSA again to protect AI time.",
+  days:[
+    {day:"Monday", items:[{n:"Invert Binary Tree",d:"Easy",p:"DFS"},{n:"Maximum Depth of Binary Tree",d:"Easy",p:"DFS"}]},
+    {day:"Tuesday", items:[{n:"Diameter of Binary Tree",d:"Easy",p:"DFS"},{n:"Balanced Binary Tree",d:"Easy",p:"DFS"}]},
+    {day:"Wednesday", items:[{n:"AI block — no new DSA problem today",d:"—",p:"—"}]},
+    {day:"Thursday", items:[{n:"Binary Tree Level Order Traversal",d:"Medium",p:"BFS"},{n:"Lowest Common Ancestor of a BST",d:"Medium",p:"BST Property"}]},
+    {day:"Friday", items:[{n:"AI block — no new DSA problem today",d:"—",p:"—"}]},
+    {day:"Saturday", items:[{n:"Validate Binary Search Tree",d:"Medium",p:"DFS + BST Property"},{n:"Kth Smallest Element in a BST",d:"Medium",p:"DFS (in-order)"}]},
+    {day:"Sunday", items:[{n:"Revision: redo Validate BST + Level Order Traversal from scratch",d:"Review",p:"Flashcards"}]},
+  ],
+  aiTitle:"Agentic AI 2/3 — Multi-Tool Agents",
+  ai:[
+    "Extend last week's agent with multiple tools: a web search tool (Tavily, free tier) and a 'summarize text' tool.",
+    "Implement the full agent loop: search → get results → summarize → return final answer, with the model choosing the order.",
+    "Test with a genuinely open-ended question (e.g. 'What are the latest trends in X?') and observe how it plans tool calls.",
+    "Keep a short log of what the agent does right and wrong — useful for Week 8's evals work.",
+  ],
+  letbex:[
+    "10 DMs/day continues.",
+    "If you've landed a second client from the new demo, begin their project (50% advance first).",
+  ],
+  resources:["Tavily API docs (free tier)","Vercel AI SDK — tool calling + multi-step agents docs","Striver's A2Z — Binary Tree"],
+},
+{ num:7, title:"Trees/Graphs Intro + Agentic AI Finishes",
+  intro:"Transition from trees into graph traversal — Number of Islands and Clone Graph are the 'hello world' of graph BFS/DFS. Course Schedule introduces topological sort (recurs in Week 8).",
+  days:[
+    {day:"Monday", items:[{n:"Binary Tree Right Side View",d:"Medium",p:"BFS"},{n:"Construct Binary Tree from Preorder and Inorder Traversal",d:"Medium",p:"DFS + Recursion"}]},
+    {day:"Tuesday", items:[{n:"Number of Islands",d:"Medium",p:"Graph BFS/DFS"},{n:"Clone Graph",d:"Medium",p:"Graph BFS/DFS + Hashing"}]},
+    {day:"Wednesday", items:[{n:"AI block — no new DSA problem today",d:"—",p:"—"}]},
+    {day:"Thursday", items:[{n:"Course Schedule",d:"Medium",p:"Topological Sort"},{n:"Pacific Atlantic Water Flow",d:"Medium",p:"Graph DFS (multi-source)"}]},
+    {day:"Friday", items:[{n:"AI block — no new DSA problem today",d:"—",p:"—"}]},
+    {day:"Saturday", items:[{n:"Rotting Oranges",d:"Medium",p:"Multi-source BFS"},{n:"Word Search",d:"Medium",p:"Backtracking + Grid DFS"}]},
+    {day:"Sunday", items:[{n:"Revision: redo Number of Islands + Course Schedule from scratch",d:"Review",p:"Flashcards"}]},
+  ],
+  aiTitle:"Agentic AI 3/3 — Retries, Error Recovery & Deploy",
+  ai:[
+    "Add error handling: what happens if a tool call fails (e.g. search API times out)? Implement retry with backoff + fallback response.",
+    "Add a max step count (hard cap, e.g. 5) with a graceful 'I couldn't complete this' message.",
+    "Deploy 'Agent v1' to Vercel and write a README documenting tools, loop structure, and retries/limits.",
+    "This deployed agent is now your flagship AI portfolio project for the rest of the plan.",
+  ],
+  letbex:[
+    "10 DMs/day continues.",
+    "Mid-plan check-in: review outreach numbers (messages sent, replies, demos sent, quotes given).",
+  ],
+  resources:["Striver Graph Series — 50 problems (YouTube)","Visualgo.net — visualize BFS/DFS","Vercel AI SDK docs — error handling & retries"],
+},
+{ num:8, title:"Graphs Continued + AI Evals Begin",
+  intro:"Heavier DSA week — Dijkstra's and topological sort variants are common at product companies. Alien Dictionary is a favorite at Adobe/Atlassian-tier interviews.",
+  days:[
+    {day:"Monday", items:[{n:"Number of Connected Components in an Undirected Graph",d:"Medium",p:"Union Find / DFS"},{n:"Course Schedule II",d:"Medium",p:"Topological Sort"}]},
+    {day:"Tuesday", items:[{n:"Surrounded Regions",d:"Medium",p:"Graph DFS (boundary)"},{n:"Word Ladder",d:"Hard",p:"BFS (shortest path)"}]},
+    {day:"Wednesday", items:[{n:"AI block — no new DSA problem today",d:"—",p:"—"}]},
+    {day:"Thursday", items:[{n:"Network Delay Time",d:"Medium",p:"Dijkstra's Algorithm"},{n:"Min Cost to Connect All Points",d:"Medium",p:"MST (Prim's)"}]},
+    {day:"Friday", items:[{n:"AI block — no new DSA problem today",d:"—",p:"—"}]},
+    {day:"Saturday", items:[{n:"Alien Dictionary",d:"Hard",p:"Topological Sort + Strings"},{n:"Redundant Connection",d:"Medium",p:"Union Find"}]},
+    {day:"Sunday", items:[{n:"Revision: redo Network Delay Time + Alien Dictionary from scratch",d:"Review",p:"Flashcards"}]},
+  ],
+  aiTitle:"Evals & Observability 1/2",
+  ai:[
+    "Set up promptfoo (open-source LLM eval framework) for your Agent v1.",
+    "Write 8-10 test cases: realistic questions your agent should handle, with expected behaviors (e.g. 'should call search tool', 'should not hallucinate a source').",
+    "Set up LangSmith (free tier) or a custom logging layer to trace every agent step — tool calls, inputs, outputs, latency.",
+    "By end of week: run your eval suite and see a pass/fail report for your agent.",
+  ],
+  letbex:[
+    "10 DMs/day continues.",
+    "If any project nears completion, request the testimonial + portfolio permission.",
+  ],
+  resources:["promptfoo.dev — getting started","LangSmith setup docs","Striver's A2Z — Graph (Dijkstra + Union Find)"],
+},
+{ num:9, title:"Heaps & Priority Queues + AI Guardrails",
+  intro:"Heaps power the 'Top K' and 'streaming median' problem families — Design Twitter ties heaps back to system design (you'll see this exact feed-ranking idea again in Week 12's HLD).",
+  days:[
+    {day:"Monday", items:[{n:"Kth Largest Element in an Array",d:"Medium",p:"Heap (Quickselect alt.)"},{n:"Last Stone Weight",d:"Easy",p:"Max Heap"}]},
+    {day:"Tuesday", items:[{n:"K Closest Points to Origin",d:"Medium",p:"Heap"},{n:"Task Scheduler",d:"Medium",p:"Heap + Greedy"}]},
+    {day:"Wednesday", items:[{n:"AI block — no new DSA problem today",d:"—",p:"—"}]},
+    {day:"Thursday", items:[{n:"Find Median from Data Stream",d:"Hard",p:"Two Heaps"},{n:"Design Twitter",d:"Medium",p:"Heap + Hashing (Design)"}]},
+    {day:"Friday", items:[{n:"AI block — no new DSA problem today",d:"—",p:"—"}]},
+    {day:"Saturday", items:[{n:"Merge k Sorted Lists (heap-based revisit)",d:"Hard",p:"Heap + K-way Merge"}]},
+    {day:"Sunday", items:[{n:"Revision: redo Find Median from Data Stream + Task Scheduler",d:"Review",p:"Flashcards"}]},
+  ],
+  aiTitle:"Evals & Guardrails 2/2 — Agent v2",
+  ai:[
+    "Add rate limiting to your agent's API route (Upstash ratelimit — free tier).",
+    "Add basic cost tracking: log token usage per request to estimate $ cost at scale.",
+    "Fix any failing eval cases from Week 8 — iterate until your eval suite passes consistently.",
+    "Deploy 'Agent v2' — evals + observability + rate limiting + guardrails = interview-ready. Update README describing v1→v2 changes.",
+  ],
+  letbex:[
+    "10 DMs/day continues.",
+    "Begin scoping the 'AI FAQ assistant' add-on for an existing/upcoming Letbex client — this is the Week 10-11 project.",
+  ],
+  resources:["Upstash ratelimit docs","Striver's A2Z — Heap","NeetCode — Heap/Priority Queue playlist"],
+},
+{ num:10, title:"Dynamic Programming Intro + Letbex AI Feature",
+  intro:"DP is pattern recognition over state transitions. Climbing Stairs and House Robber teach the 1D DP template; Longest Palindromic Substring and Coin Change extend it to strings and unbounded choices.",
+  days:[
+    {day:"Monday", items:[{n:"Climbing Stairs",d:"Easy",p:"1D DP"},{n:"House Robber",d:"Medium",p:"1D DP"}]},
+    {day:"Tuesday", items:[{n:"House Robber II",d:"Medium",p:"1D DP (circular)"},{n:"Longest Palindromic Substring",d:"Medium",p:"2D DP / Expand from Center"}]},
+    {day:"Wednesday", items:[{n:"AI/Letbex block — no new DSA problem today",d:"—",p:"—"}]},
+    {day:"Thursday", items:[{n:"Coin Change",d:"Medium",p:"Unbounded Knapsack"},{n:"Maximum Product Subarray",d:"Medium",p:"1D DP"}]},
+    {day:"Friday", items:[{n:"AI/Letbex block — no new DSA problem today",d:"—",p:"—"}]},
+    {day:"Saturday", items:[{n:"Longest Increasing Subsequence",d:"Medium",p:"1D DP"},{n:"Word Break",d:"Medium",p:"1D DP + Hashing"}]},
+    {day:"Sunday", items:[{n:"Revision: redo Coin Change + Longest Increasing Subsequence",d:"Review",p:"Flashcards"}]},
+  ],
+  aiTitle:"Build the Client AI Feature",
+  ai:[
+    "Take your Agent v2 / RAG pipeline skills and build an 'AI FAQ Assistant' for a real Letbex client (Vipul or whichever is active).",
+    "Embed the client's service info, pricing, and FAQs into your vector store (reuse Week 3-4 RAG pipeline).",
+    "Build a simple chat widget the client can embed on their site — minimal UI, focus on reliability.",
+    "Test it with 10+ realistic visitor questions before showing the client.",
+  ],
+  letbex:[
+    "10 DMs/day continues.",
+    "Present the AI FAQ assistant to the client as a premium add-on (₹3,000-5,000).",
+  ],
+  resources:["Striver's A2Z — Dynamic Programming (1D DP)","NeetCode — Dynamic Programming playlist"],
+},
+{ num:11, title:"DP/Greedy + Letbex AI Feature Finishes",
+  intro:"Closing out DP with 2D problems (LCS, Unique Paths) and pivoting into Greedy (Jump Game, Gas Station) — Greedy proofs are about justifying 'why does the local choice work globally,' which interviewers probe directly.",
+  days:[
+    {day:"Monday", items:[{n:"Longest Common Subsequence",d:"Medium",p:"2D DP"},{n:"Partition Equal Subset Sum",d:"Medium",p:"0/1 Knapsack"}]},
+    {day:"Tuesday", items:[{n:"Unique Paths",d:"Medium",p:"2D DP"},{n:"Decode Ways",d:"Medium",p:"1D DP"}]},
+    {day:"Wednesday", items:[{n:"AI/Letbex block — no new DSA problem today",d:"—",p:"—"}]},
+    {day:"Thursday", items:[{n:"Jump Game",d:"Medium",p:"Greedy"},{n:"Gas Station",d:"Medium",p:"Greedy"}]},
+    {day:"Friday", items:[{n:"AI/Letbex block — no new DSA problem today",d:"—",p:"—"}]},
+    {day:"Saturday", items:[{n:"Merge Intervals",d:"Medium",p:"Greedy + Sorting"},{n:"Non-overlapping Intervals",d:"Medium",p:"Greedy + Sorting"}]},
+    {day:"Sunday", items:[{n:"Begin System Design prep: read 'System Design Interview' (Alex Xu) Ch. 1-2",d:"Reading",p:"—"}]},
+  ],
+  aiTitle:"Finalize, Get Feedback, Write Case Study",
+  ai:[
+    "Polish the AI FAQ assistant based on client feedback from Week 10.",
+    "Write a short case study for your portfolio: the problem, your RAG architecture, and real usage stats if possible.",
+    "Add 'Built and deployed an agentic AI assistant' as a line item on your resume/portfolio with a link to the live project.",
+    "By Sunday, both Agent v2 and the Letbex AI feature should be live and documented — your capstone AI deliverable.",
+  ],
+  letbex:[
+    "10 DMs/day continues.",
+    "Request a written testimonial for the AI feature specifically — 'AI-powered websites' becomes a new Letbex service line.",
+  ],
+  resources:["Striver's A2Z — Greedy","'System Design Interview' — Alex Xu, Vol 1 (Ch. 1-2)"],
+},
+{ num:12, title:"System Design (HLD + LLD) + Mock Interviews",
+  intro:"No new DSA this week — pure system design and interview simulation. Each HLD design follows: Requirements → Scale estimates → API design → DB schema → Architecture → Bottlenecks → Deep dive.",
+  days:[
+    {day:"Monday", items:[{n:"HLD: URL Shortener — full framework (requirements through deep dive)",d:"HLD",p:"Framework practice"}]},
+    {day:"Tuesday", items:[{n:"HLD: Rate Limiter — connect to Redis (used in CenterX)",d:"HLD",p:"Framework practice"}]},
+    {day:"Wednesday", items:[{n:"HLD: Twitter/Instagram Feed — connect to Week 9's heap-based feed ranking",d:"HLD",p:"Framework practice"}]},
+    {day:"Thursday", items:[{n:"HLD: WhatsApp / Chat System",d:"HLD",p:"Framework practice"}]},
+    {day:"Friday", items:[{n:"HLD: Uber / Ride Sharing",d:"HLD",p:"Framework practice"}]},
+    {day:"Saturday", items:[{n:"LLD: Parking Lot (SOLID principles, TS class modelling)",d:"LLD",p:"OOP Design"},{n:"LLD: Library Management System",d:"LLD",p:"OOP Design"}]},
+    {day:"Sunday", items:[{n:"LLD: Splitwise or Amazon Cart/Orders + final review of all 12 weeks",d:"LLD",p:"OOP Design"}]},
+  ],
+  aiTitle:"Portfolio & Mock Interviews",
+  ai:[
+    "Schedule 4 mock interviews this week via Pramp or peers: 2 coding mocks (any week 1-11 DSA) + 2 system design mocks (HLD from this week).",
+    "Final portfolio check: CenterX, Uniprint, YEUlink, WatchGuard, streaming chat app, RAG PDF app, Agent v2, and the Letbex AI feature should all be deployed and linked.",
+    "Resume rewrite: ensure AI-fabricated metrics are removed/validated and new AI projects are added.",
+    "End-of-plan reflection: revisit your roadmap doc and update the outreach log, income earned, and which phase of Path 1/Path 2 you're now in.",
+  ],
+  letbex:[
+    "10 DMs/day continues — even during this heavy system-design week, per the #1 rule: pipeline must never go to zero.",
+    "Update the Letbex outreach log with this week's numbers.",
+  ],
+  resources:["'System Design Interview' — Alex Xu, Vol 1 (relevant chapters)","Gaurav Sen — System Design playlist","Pramp — free peer mock interviews"],
+},
+];
+
+const MILESTONES = {
+  agentV1: "t-w7-ai2",
+  agentV2: "t-w9-ai3",
+  portfolioPiece: "t-w11-ai2",
+};
+
+const XP_MAP = {Easy:10, Medium:15, Hard:25, Review:10, Reading:10, HLD:20, LLD:20};
+const AI_XP = 20;
+const LB_XP = 15;
+
+const LEVELS = [
+  {xp:0,    title:"Bootcamp Grad",        icon:"🌱"},
+  {xp:150,  title:"Array Slinger",        icon:"🔢"},
+  {xp:350,  title:"Pointer Wizard",       icon:"👉"},
+  {xp:600,  title:"Binary Search Sensei", icon:"🔍"},
+  {xp:900,  title:"List Untangler",       icon:"🔗"},
+  {xp:1250, title:"ReAct Apprentice",     icon:"🤖"},
+  {xp:1650, title:"Graph Whisperer",      icon:"🕸️"},
+  {xp:2000, title:"Agent Architect",      icon:"🛠️"},
+  {xp:2350, title:"Heap Lord",            icon:"⛰️"},
+  {xp:2700, title:"DP Tactician",         icon:"♟️"},
+  {xp:3070, title:"Staff Engineer",       icon:"🏆"},
+];
+
+const ACHIEVEMENTS = [
+  {id:"first",      icon:"🎯", title:"First Commit",        desc:"Complete your first task."},
+  {id:"week1",      icon:"🏁", title:"Week 1 Wrapped",      desc:"Finish every task in Week 1."},
+  {id:"streak3",    icon:"🔥", title:"3-Day Streak",        desc:"Make progress 3 days in a row."},
+  {id:"streak7",    icon:"🔥", title:"7-Day Streak",        desc:"Make progress 7 days in a row."},
+  {id:"dsa25",      icon:"🧩", title:"25 Problems Solved",  desc:"Solve 25 DSA problems."},
+  {id:"dsa50",      icon:"🧩", title:"50 Problems Solved",  desc:"Solve 50 DSA problems."},
+  {id:"dsa90",      icon:"🧩", title:"90 Problems Solved",  desc:"Solve nearly every DSA problem in the plan."},
+  {id:"agentv1",    icon:"🤖", title:"Agent v1 Deployed",   desc:"Ship your first agent with retries & error handling."},
+  {id:"agentv2",    icon:"🚀", title:"Agent v2 Shipped",    desc:"Harden your agent with evals & guardrails."},
+  {id:"portfolio",  icon:"📄", title:"Portfolio Piece Live",desc:"Add the AI assistant to your resume/portfolio."},
+  {id:"sysdesign",  icon:"🏗️", title:"System Design Survivor", desc:"Complete all HLD + LLD designs in Week 12."},
+  {id:"complete",   icon:"🏆", title:"12 Weeks Complete",   desc:"Finish the entire roadmap. You did it."},
+];
+
+/* =========================================================
+   STATE
+   ========================================================= */
+const STORAGE_KEY = "roadmap-tracker-v1";
+let state = { completed:{}, activity:{}, unlocked:{} };
+let activeTab = "dashboard"; // "dashboard" | "ach" | week number (1-12)
+let chartRefs = {};
+
+function todayStr(){
+  const d = new Date();
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+
+async function loadState(){
+  try{
+    const res = await window.storage.get(STORAGE_KEY, false);
+    if(res && res.value){
+      const parsed = JSON.parse(res.value);
+      state = Object.assign({completed:{}, activity:{}, unlocked:{}}, parsed);
+    }
+  }catch(e){ /* no saved state yet */ }
+}
+async function saveState(){
+  try{ await window.storage.set(STORAGE_KEY, JSON.stringify(state), false); }
+  catch(e){ console.error("save failed", e); }
+}
+
+/* =========================================================
+   COMPUTATION HELPERS
+   ========================================================= */
+function xpForDsa(diff){ return XP_MAP[diff] ?? 10; }
+
+function buildTaskList(){
+  // Returns flat list of {id, weekNum, category, label, diff, pattern, day, xp}
+  const tasks = [];
+  ROADMAP.forEach(w=>{
+    w.days.forEach((d,di)=>{
+      d.items.forEach((it,ii)=>{
+        if(it.d === "—") return;
+        tasks.push({id:`t-w${w.num}-d${di}-i${ii}`, weekNum:w.num, category:"dsa", label:it.n, diff:it.d, pattern:it.p, day:d.day, xp:xpForDsa(it.d)});
+      });
+    });
+    w.ai.forEach((txt,i)=>{
+      tasks.push({id:`t-w${w.num}-ai${i}`, weekNum:w.num, category:"ai", label:txt, xp:AI_XP});
+    });
+    w.letbex.forEach((txt,i)=>{
+      tasks.push({id:`t-w${w.num}-lb${i}`, weekNum:w.num, category:"letbex", label:txt, xp:LB_XP});
+    });
+  });
+  return tasks;
+}
+const ALL_TASKS = buildTaskList();
+const TOTAL_XP = ALL_TASKS.reduce((s,t)=>s+t.xp,0);
+
+function computeStats(){
+  let earnedXP = 0, doneCount = 0, dsaDone = 0, dsaTotal = 0;
+  const perWeek = {};
+  ROADMAP.forEach(w=> perWeek[w.num] = {total:0, done:0, totalXP:0, earnedXP:0});
+
+  ALL_TASKS.forEach(t=>{
+    perWeek[t.weekNum].total++;
+    perWeek[t.weekNum].totalXP += t.xp;
+    if(t.category==="dsa" && ["Easy","Medium","Hard"].includes(t.diff)) dsaTotal++;
+    if(state.completed[t.id]){
+      earnedXP += t.xp;
+      doneCount++;
+      perWeek[t.weekNum].done++;
+      perWeek[t.weekNum].earnedXP += t.xp;
+      if(t.category==="dsa" && ["Easy","Medium","Hard"].includes(t.diff)) dsaDone++;
+    }
+  });
+
+  // streaks
+  const activeDates = Object.keys(state.activity).filter(d=>state.activity[d] > 0).sort();
+  let bestStreak = 0, run = 0, prev = null;
+  activeDates.forEach(d=>{
+    if(prev){
+      const prevDate = new Date(prev), curDate = new Date(d);
+      const diffDays = Math.round((curDate - prevDate)/86400000);
+      run = (diffDays === 1) ? run+1 : 1;
+    } else run = 1;
+    if(run > bestStreak) bestStreak = run;
+    prev = d;
+  });
+  // current streak: consecutive days ending today or yesterday
+  let currentStreak = 0;
+  const today = new Date();
+  for(let i=0;i<3000;i++){
+    const d = new Date(today); d.setDate(d.getDate()-i);
+    const key = d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+    if(state.activity[key] > 0) currentStreak++;
+    else { if(i===0) continue; else break; }
+  }
+
+  // week 12 dsa completion (system design)
+  const w12 = ROADMAP[11];
+  let w12DsaTotal=0, w12DsaDone=0;
+  w12.days.forEach((d,di)=>d.items.forEach((it,ii)=>{
+    if(it.d==="—") return;
+    w12DsaTotal++;
+    if(state.completed[`t-w12-d${di}-i${ii}`]) w12DsaDone++;
+  }));
+
+  return {
+    earnedXP, totalXP: TOTAL_XP, doneCount, totalCount: ALL_TASKS.length,
+    dsaDone, dsaTotal, perWeek, bestStreak, currentStreak,
+    w12DsaTotal, w12DsaDone,
+    overallPct: ALL_TASKS.length ? (doneCount/ALL_TASKS.length*100) : 0,
+  };
+}
+
+function getLevel(xp){
+  let idx = 0;
+  for(let i=0;i<LEVELS.length;i++){ if(xp >= LEVELS[i].xp) idx = i; }
+  const cur = LEVELS[idx];
+  const next = LEVELS[idx+1] || null;
+  const pct = next ? Math.min(100, ((xp - cur.xp)/(next.xp - cur.xp))*100) : 100;
+  return {idx, cur, next, pct};
+}
+
+function checkAchievements(stats){
+  const week1 = ROADMAP[0];
+  let week1Total=0, week1Done=0;
+  week1.days.forEach((d,di)=>d.items.forEach((it,ii)=>{ if(it.d==="—") return; week1Total++; if(state.completed[`t-w1-d${di}-i${ii}`]) week1Done++; }));
+  week1.ai.forEach((_,i)=>{ week1Total++; if(state.completed[`t-w1-ai${i}`]) week1Done++; });
+  week1.letbex.forEach((_,i)=>{ week1Total++; if(state.completed[`t-w1-lb${i}`]) week1Done++; });
+
+  const checks = {
+    first: stats.doneCount >= 1,
+    week1: week1Done === week1Total,
+    streak3: stats.bestStreak >= 3,
+    streak7: stats.bestStreak >= 7,
+    dsa25: stats.dsaDone >= 25,
+    dsa50: stats.dsaDone >= 50,
+    dsa90: stats.dsaDone >= 90,
+    agentv1: !!state.completed[MILESTONES.agentV1],
+    agentv2: !!state.completed[MILESTONES.agentV2],
+    portfolio: !!state.completed[MILESTONES.portfolioPiece],
+    sysdesign: stats.w12DsaDone === stats.w12DsaTotal,
+    complete: stats.overallPct >= 100,
+  };
+  return checks;
+}
+
+/* =========================================================
+   TOAST
+   ========================================================= */
+function showToast(text, gold){
+  const wrap = document.getElementById("toastWrap");
+  const el = document.createElement("div");
+  el.className = "toast" + (gold ? " gold" : "");
+  el.textContent = text;
+  wrap.appendChild(el);
+  setTimeout(()=>el.remove(), 2500);
+}
+
+/* =========================================================
+   RENDER: HEADER
+   ========================================================= */
+function renderHeader(){
+  const stats = computeStats();
+  const lvl = getLevel(stats.earnedXP);
+  const strip = document.getElementById("statsStrip");
+  strip.innerHTML = `
+    <div class="level-chip">
+      <span class="lv-icon">${lvl.cur.icon}</span>
+      <span class="lv-num">LV ${lvl.idx+1}</span>
+      <span class="lv-title">${lvl.cur.title}</span>
+    </div>
+    <div class="xp-track">
+      <div class="xp-fill" style="width:${lvl.pct}%"></div>
+      <div class="xp-label">${stats.earnedXP} / ${stats.totalXP} XP</div>
+    </div>
+    <div class="streak-chip">🔥 ${stats.currentStreak}</div>
+  `;
+}
+
+/* =========================================================
+   RENDER: TABS
+   ========================================================= */
+function renderTabs(){
+  const stats = computeStats();
+  const tabsEl = document.getElementById("tabs");
+  let html = `<button class="tab ${activeTab==='dashboard'?'active':''}" data-tab="dashboard">Dashboard</button>`;
+  for(let i=1;i<=12;i++){
+    const pw = stats.perWeek[i];
+    const done = pw.done === pw.total;
+    html += `<button class="tab ${activeTab===i?'active':''}" data-tab="${i}">W${i}${done?'<span class="tick">✓</span>':''}</button>`;
+  }
+  html += `<button class="tab ${activeTab==='ach'?'active':''}" data-tab="ach">Achievements</button>`;
+  tabsEl.innerHTML = html;
+  tabsEl.querySelectorAll(".tab").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const t = btn.dataset.tab;
+      activeTab = (t==="dashboard"||t==="ach") ? t : parseInt(t);
+      renderAll();
+      window.scrollTo({top:0, behavior:"smooth"});
+    });
+  });
+}
+
+/* =========================================================
+   RENDER: DASHBOARD
+   ========================================================= */
+function buildHeatmap(){
+  const days = 91; // 13 weeks
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  // align so the grid ends today, columns = weeks, rows = Mon..Sun
+  const cells = [];
+  for(let i=days-1;i>=0;i--){
+    const d = new Date(today); d.setDate(d.getDate()-i);
+    const key = d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+    cells.push({date:d, key, count: state.activity[key]||0});
+  }
+  // pad start to begin on Monday
+  const firstDow = (cells[0].date.getDay()+6)%7; // 0=Mon
+  for(let i=0;i<firstDow;i++) cells.unshift({date:null,key:null,count:-1});
+  // group into columns of 7
+  const cols = [];
+  for(let i=0;i<cells.length;i+=7) cols.push(cells.slice(i,i+7));
+
+  function level(c){
+    if(c===-1) return "transparent";
+    if(c===0) return "var(--bg-elev-2)";
+    if(c===1) return "rgba(69,214,196,0.30)";
+    if(c===2) return "rgba(69,214,196,0.55)";
+    if(c===3) return "rgba(69,214,196,0.8)";
+    return "var(--teal)";
+  }
+  let html = `<div class="heatmap-wrap">`;
+  cols.forEach(col=>{
+    html += `<div class="heatmap-col">`;
+    col.forEach(c=>{
+      const title = c.key ? `${c.key}: ${c.count} task${c.count===1?'':'s'}` : "";
+      html += `<div class="heatmap-cell" title="${title}" style="background:${level(c.count)};${c.key?'':'border-color:transparent;'}"></div>`;
+    });
+    html += `</div>`;
+  });
+  html += `</div>`;
+  html += `<div class="heatmap-legend">Less
+    <div class="heatmap-cell" style="background:var(--bg-elev-2)"></div>
+    <div class="heatmap-cell" style="background:rgba(69,214,196,0.30)"></div>
+    <div class="heatmap-cell" style="background:rgba(69,214,196,0.55)"></div>
+    <div class="heatmap-cell" style="background:rgba(69,214,196,0.8)"></div>
+    <div class="heatmap-cell" style="background:var(--teal)"></div>
+    More · last 13 weeks</div>`;
+  return html;
+}
+
+function findNextTask(){
+  for(const t of ALL_TASKS){
+    if(!state.completed[t.id]) return t;
+  }
+  return null;
+}
+
+function renderDashboard(){
+  const stats = computeStats();
+  const lvl = getLevel(stats.earnedXP);
+  const next = findNextTask();
+
+  let html = `<div class="grid grid-4">
+    <div class="card">
+      <div class="card-label">Total XP</div>
+      <div class="card-value accent-gold">${stats.earnedXP}</div>
+      <div class="card-sub">of ${stats.totalXP} XP available</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Level</div>
+      <div class="card-value accent-purple">${lvl.idx+1} / ${LEVELS.length}</div>
+      <div class="card-sub">${lvl.cur.title}</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Streak</div>
+      <div class="card-value accent-coral">${stats.currentStreak}d</div>
+      <div class="card-sub">best: ${stats.bestStreak} days</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Overall Progress</div>
+      <div class="card-value accent-teal">${stats.overallPct.toFixed(0)}%</div>
+      <div class="card-sub">${stats.doneCount} / ${stats.totalCount} tasks</div>
+    </div>
+  </div>`;
+
+  // Next up
+  if(next){
+    const icon = next.category==="dsa" ? "🧩" : next.category==="ai" ? "🤖" : "📣";
+    const meta = next.category==="dsa" ? `Week ${next.weekNum} · ${next.day} · ${next.pattern} · ${next.diff}` : `Week ${next.weekNum} · ${next.category==='ai'?'AI/ML Track':'Letbex Outreach'}`;
+    html += `<div class="section-title"><span class="dot" style="background:var(--gold)"></span>Next Up</div>
+    <div class="nextup">
+      <div class="nextup-icon">${icon}</div>
+      <div class="nextup-body">
+        <div class="nextup-label">+${next.xp} XP</div>
+        <div class="nextup-text">${escapeHtml(next.label)}</div>
+        <div class="nextup-meta">${meta}</div>
+      </div>
+      <button class="nextup-btn" data-goto="${next.weekNum}">Go to Week ${next.weekNum} →</button>
+    </div>`;
+  } else {
+    html += `<div class="nextup"><div class="nextup-body"><div class="nextup-text">🏆 Everything is complete. You finished the entire 12-week plan.</div></div></div>`;
+  }
+
+  // Heatmap
+  html += `<div class="section-title"><span class="dot" style="background:var(--teal)"></span>Your Build Streak</div>
+  <div class="card heatmap-card">${buildHeatmap()}</div>`;
+
+  // Charts
+  html += `<div class="section-title"><span class="dot" style="background:var(--purple)"></span>Progress Breakdown</div>
+  <div class="grid grid-2">
+    <div class="card chart-card"><canvas id="weeklyChart"></canvas></div>
+    <div class="card chart-card"><canvas id="categoryChart"></canvas></div>
+  </div>`;
+
+  // Overview table
+  html += `<div class="section-title"><span class="dot" style="background:var(--coral)"></span>12-Week Overview</div>
+  <div class="card">
+  <table class="overview-table">
+    <tr><th>Week</th><th>Focus</th><th>Progress</th><th></th></tr>
+    ${ROADMAP.map(w=>{
+      const pw = stats.perWeek[w.num];
+      const pct = pw.total ? (pw.done/pw.total*100) : 0;
+      return `<tr data-goto="${w.num}">
+        <td style="font-family:var(--font-mono);color:var(--purple);font-weight:700;">W${w.num}</td>
+        <td>${escapeHtml(w.title)}</td>
+        <td><div class="ov-bar"><div class="ov-bar-fill" style="width:${pct}%"></div></div></td>
+        <td style="font-family:var(--font-mono);color:var(--text-dim);font-size:11px;">${pw.done}/${pw.total}</td>
+      </tr>`;
+    }).join("")}
+  </table>
+  </div>`;
+
+  document.getElementById("view").innerHTML = html;
+
+  // wire goto buttons
+  document.querySelectorAll("[data-goto]").forEach(el=>{
+    el.addEventListener("click", ()=>{ activeTab = parseInt(el.dataset.goto); renderAll(); window.scrollTo({top:0,behavior:"smooth"}); });
+  });
+
+  // charts
+  renderCharts(stats);
+}
+
+function renderCharts(stats){
+  // destroy old
+  Object.values(chartRefs).forEach(c=>c && c.destroy());
+  chartRefs = {};
+
+  const weeklyCtx = document.getElementById("weeklyChart");
+  if(weeklyCtx){
+    chartRefs.weekly = new Chart(weeklyCtx, {
+      type: "bar",
+      data: {
+        labels: ROADMAP.map(w=>"W"+w.num),
+        datasets: [{
+          label: "Completion %",
+          data: ROADMAP.map(w=> { const pw = stats.perWeek[w.num]; return pw.total ? +(pw.done/pw.total*100).toFixed(0) : 0; }),
+          backgroundColor: ROADMAP.map(w=> w.num<=4 ? "rgba(167,139,250,0.7)" : w.num<=9 ? "rgba(69,214,196,0.7)" : "rgba(255,139,107,0.7)"),
+          borderRadius: 4,
+          maxBarThickness: 28,
+        }]
+      },
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{display:false}, title:{display:true, text:"Completion by Week", color:"#8A93A6", font:{size:11, family:"ui-monospace"}, padding:{bottom:10}} },
+        scales:{
+          y:{ min:0, max:100, ticks:{color:"#545D70", font:{size:10}}, grid:{color:"#1F2530"} },
+          x:{ ticks:{color:"#8A93A6", font:{size:10, family:"ui-monospace"}}, grid:{display:false} },
+        }
+      }
+    });
+  }
+
+  const catCtx = document.getElementById("categoryChart");
+  if(catCtx){
+    let dsaDone=0,dsaTot=0,aiDone=0,aiTot=0,lbDone=0,lbTot=0;
+    ALL_TASKS.forEach(t=>{
+      if(t.category==="dsa"){ dsaTot++; if(state.completed[t.id]) dsaDone++; }
+      if(t.category==="ai"){ aiTot++; if(state.completed[t.id]) aiDone++; }
+      if(t.category==="letbex"){ lbTot++; if(state.completed[t.id]) lbDone++; }
+    });
+    chartRefs.category = new Chart(catCtx, {
+      type:"doughnut",
+      data:{
+        labels:[`DSA (${dsaDone}/${dsaTot})`, `AI/ML (${aiDone}/${aiTot})`, `Letbex (${lbDone}/${lbTot})`],
+        datasets:[{
+          data:[dsaDone,aiDone,lbDone],
+          backgroundColor:["#A78BFA","#45D6C4","#FF8B6B"],
+          borderColor:"#161B24", borderWidth:3,
+        },{
+          // ghost ring showing remaining
+          data:[dsaTot-dsaDone, aiTot-aiDone, lbTot-lbDone],
+          backgroundColor:["rgba(167,139,250,0.12)","rgba(69,214,196,0.12)","rgba(255,139,107,0.12)"],
+          borderColor:"#161B24", borderWidth:3,
+        }]
+      },
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        cutout:"60%",
+        plugins:{
+          legend:{ position:"bottom", labels:{color:"#8A93A6", font:{size:10.5, family:"ui-monospace"}, boxWidth:10, padding:10} },
+          title:{display:true, text:"Tasks Completed by Category", color:"#8A93A6", font:{size:11, family:"ui-monospace"}, padding:{bottom:10}},
+          tooltip:{enabled:false},
+        }
+      }
+    });
+  }
+}
+
+/* =========================================================
+   RENDER: WEEK
+   ========================================================= */
+function escapeHtml(s){
+  return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+function renderWeek(num){
+  const w = ROADMAP[num-1];
+  const stats = computeStats();
+  const pw = stats.perWeek[num];
+  const pct = pw.total ? (pw.done/pw.total*100) : 0;
+
+  let html = `<div class="week-head">
+    <div class="week-num">Week ${w.num} of 12</div>
+    <div class="week-title">${escapeHtml(w.title)}</div>
+    <div class="week-intro">${escapeHtml(w.intro)}</div>
+    <div class="week-progress">
+      <div class="week-progress-track"><div class="week-progress-fill" style="width:${pct}%"></div></div>
+      <div class="week-progress-label">${pw.done}/${pw.total} · ${pw.earnedXP}/${pw.totalXP} XP</div>
+    </div>
+  </div>`;
+
+  // DSA group
+  html += `<div class="task-group dsa-group">
+    <div class="task-group-head">🧩 DSA — Day by Day</div>`;
+  w.days.forEach((d,di)=>{
+    d.items.forEach((it,ii)=>{
+      if(it.d === "—"){
+        html += `<div class="note-row"><span class="task-day">${d.day}</span><span>${escapeHtml(it.n)}</span></div>`;
+        return;
+      }
+      const id = `t-w${w.num}-d${di}-i${ii}`;
+      const done = !!state.completed[id];
+      html += `<div class="task-row ${done?'done':''}">
+        <span class="task-day">${d.day}</span>
+        <input type="checkbox" class="checkbox" data-id="${id}" data-xp="${xpForDsa(it.d)}" ${done?'checked':''}>
+        <div class="task-body">
+          <div class="task-text">${escapeHtml(it.n)}</div>
+          <div class="task-tags"><span class="tag tag-pattern">${escapeHtml(it.p)}</span><span class="tag tag-${it.d}">${it.d}</span></div>
+        </div>
+        <div class="task-xp">+${xpForDsa(it.d)}</div>
+      </div>`;
+    });
+  });
+  html += `</div>`;
+
+  // AI group
+  html += `<div class="task-group ai-group">
+    <div class="task-group-head">🤖 AI / ML Track — ${escapeHtml(w.aiTitle)}</div>`;
+  w.ai.forEach((txt,i)=>{
+    const id = `t-w${w.num}-ai${i}`;
+    const done = !!state.completed[id];
+    html += `<div class="task-row ${done?'done':''}">
+      <input type="checkbox" class="checkbox" data-id="${id}" data-xp="${AI_XP}" ${done?'checked':''}>
+      <div class="task-body"><div class="task-text">${escapeHtml(txt)}</div></div>
+      <div class="task-xp">+${AI_XP}</div>
+    </div>`;
+  });
+  html += `</div>`;
+
+  // Letbex group
+  html += `<div class="task-group lb-group">
+    <div class="task-group-head">📣 Letbex / Outreach</div>`;
+  w.letbex.forEach((txt,i)=>{
+    const id = `t-w${w.num}-lb${i}`;
+    const done = !!state.completed[id];
+    html += `<div class="task-row ${done?'done':''}">
+      <input type="checkbox" class="checkbox" data-id="${id}" data-xp="${LB_XP}" ${done?'checked':''}>
+      <div class="task-body"><div class="task-text">${escapeHtml(txt)}</div></div>
+      <div class="task-xp">+${LB_XP}</div>
+    </div>`;
+  });
+  html += `</div>`;
+
+  // Resources
+  html += `<div class="section-title"><span class="dot" style="background:var(--text-faint)"></span>Resources</div>
+  <div class="card"><ul class="resources-list">${w.resources.map(r=>`<li>${escapeHtml(r)}</li>`).join("")}</ul></div>`;
+
+  document.getElementById("view").innerHTML = html;
+
+  // wire checkboxes
+  document.querySelectorAll(".checkbox").forEach(cb=>{
+    cb.addEventListener("change", onToggle);
+  });
+}
+
+/* =========================================================
+   RENDER: ACHIEVEMENTS
+   ========================================================= */
+function renderAchievements(){
+  const stats = computeStats();
+  const checks = checkAchievements(stats);
+  let html = `<div class="section-title"><span class="dot" style="background:var(--gold)"></span>Achievements</div>
+  <div class="ach-grid">`;
+  ACHIEVEMENTS.forEach(a=>{
+    const unlocked = checks[a.id];
+    html += `<div class="ach-card ${unlocked?'unlocked':'locked'}">
+      <div class="ach-icon">${a.icon}</div>
+      <div class="ach-title">${a.title}</div>
+      <div class="ach-desc">${a.desc}</div>
+    </div>`;
+  });
+  html += `</div>`;
+  document.getElementById("view").innerHTML = html;
+}
+
+/* =========================================================
+   TOGGLE HANDLER
+   ========================================================= */
+async function onToggle(e){
+  const id = e.target.dataset.id;
+  const xp = parseInt(e.target.dataset.xp);
+  const willBeDone = e.target.checked;
+  const today = todayStr();
+
+  const statsBefore = computeStats();
+  const checksBefore = checkAchievements(statsBefore);
+
+  if(willBeDone){
+    state.completed[id] = true;
+    state.activity[today] = (state.activity[today]||0) + 1;
+  } else {
+    delete state.completed[id];
+    state.activity[today] = Math.max(0, (state.activity[today]||0) - 1);
+  }
+  await saveState();
+
+  const statsAfter = computeStats();
+  const checksAfter = checkAchievements(statsAfter);
+
+  if(willBeDone){
+    showToast(`+${xp} XP`);
+    // level up?
+    const lvlBefore = getLevel(statsBefore.earnedXP);
+    const lvlAfter = getLevel(statsAfter.earnedXP);
+    if(lvlAfter.idx > lvlBefore.idx){
+      setTimeout(()=>showToast(`⭐ Level Up! You're now ${lvlAfter.cur.title}`, true), 350);
+    }
+    // new achievements?
+    let delay = 700;
+    ACHIEVEMENTS.forEach(a=>{
+      if(checksAfter[a.id] && !checksBefore[a.id]){
+        setTimeout(()=>showToast(`${a.icon} Achievement: ${a.title}`, true), delay);
+        delay += 700;
+      }
+    });
+  }
+
+  renderHeader();
+  renderTabs();
+  // refresh the row's visual state without full re-render
+  const row = e.target.closest(".task-row");
+  if(row) row.classList.toggle("done", willBeDone);
+  // update week progress bar
+  if(typeof activeTab === "number"){
+    const w = ROADMAP[activeTab-1];
+    const pw = computeStats().perWeek[w.num];
+    const pct = pw.total ? (pw.done/pw.total*100) : 0;
+    const fill = document.querySelector(".week-progress-fill");
+    const label = document.querySelector(".week-progress-label");
+    if(fill) fill.style.width = pct+"%";
+    if(label) label.textContent = `${pw.done}/${pw.total} · ${pw.earnedXP}/${pw.totalXP} XP`;
+  }
+}
+
+/* =========================================================
+   MAIN RENDER
+   ========================================================= */
+function renderAll(){
+  renderHeader();
+  renderTabs();
+  if(activeTab === "dashboard") renderDashboard();
+  else if(activeTab === "ach") renderAchievements();
+  else renderWeek(activeTab);
+}
+
+/* =========================================================
+   INIT
+   ========================================================= */
+document.getElementById("resetBtn").addEventListener("click", async ()=>{
+  if(confirm("Reset all progress? This cannot be undone.")){
+    state = {completed:{}, activity:{}, unlocked:{}};
+    await saveState();
+    renderAll();
+    showToast("Progress reset");
+  }
+});
+
+(async function init(){
+  await loadState();
+  renderAll();
+})();
+</script>
+</body>
+</html>

@@ -1,65 +1,212 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import React, { useState, useEffect, useRef } from "react";
+import {
+  computeStats,
+  getLevel,
+  checkAchievements,
+  ACHIEVEMENTS,
+  Stats,
+} from "../components/roadmapData";
+import Header from "../components/Header";
+import Tabs from "../components/Tabs";
+import Dashboard from "../components/Dashboard";
+import WeekView from "../components/WeekView";
+import AchievementsView from "../components/AchievementsView";
+import Footer from "../components/Footer";
+import ToastContainer, { Toast } from "../components/ToastContainer";
+
+const STORAGE_KEY = "roadmap-tracker-v1";
+
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
+
+export default function Page() {
+  const [completed, setCompleted] = useState<Record<string, boolean>>({});
+  const [activity, setActivity] = useState<Record<string, number>>({});
+  const [activeTab, setActiveTab] = useState<string | number>("dashboard");
+  const [toasts, setToasts] = useState<Toast[]>([]);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  // Load state on mount
+  useEffect(() => {
+    async function loadProgress() {
+      try {
+        const res = await fetch("/api/progress");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.completed) setCompleted(data.completed);
+          if (data.activity) setActivity(data.activity);
+        } else {
+          // Fallback to localStorage on API error
+          const saved = localStorage.getItem(STORAGE_KEY);
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            if (parsed.completed) setCompleted(parsed.completed);
+            if (parsed.activity) setActivity(parsed.activity);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to fetch progress from API", e);
+        // Fallback to localStorage on request error
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed.completed) setCompleted(parsed.completed);
+          if (parsed.activity) setActivity(parsed.activity);
+        }
+      } finally {
+        setIsHydrated(true);
+      }
+    }
+    loadProgress();
+
+    // Register Service Worker
+    if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+      navigator.serviceWorker
+        .register("/sw.js")
+        .then((reg) => console.log("Service Worker registered:", reg.scope))
+        .catch((err) => console.error("Service Worker registration failed:", err));
+    }
+  }, []);
+
+  const saveProgress = async (
+    nextCompleted: Record<string, boolean>,
+    nextActivity: Record<string, number>
+  ) => {
+    // Save to local storage for quick sync/offline backup
+    try {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ completed: nextCompleted, activity: nextActivity })
+      );
+    } catch (e) {
+      console.error("Failed to save to localStorage", e);
+    }
+
+    // Save to MongoDB
+    try {
+      await fetch("/api/progress", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ completed: nextCompleted, activity: nextActivity }),
+      });
+    } catch (e) {
+      console.error("Failed to save progress to MongoDB", e);
+    }
+  };
+
+  const showToast = (text: string, gold = false) => {
+    const id = Math.random().toString(36).substring(2, 9);
+    setToasts((prev) => [...prev, { id, text, gold }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 2500);
+  };
+
+  const handleToggle = (id: string, xp: number, checked: boolean) => {
+    const today = todayStr();
+
+    // Compute stats with current state
+    const statsBefore = computeStats(completed, activity);
+    const checksBefore = checkAchievements(statsBefore, completed);
+
+    // Prepare updated state
+    const nextCompleted = { ...completed };
+    const nextActivity = { ...activity };
+
+    if (checked) {
+      nextCompleted[id] = true;
+      nextActivity[today] = (nextActivity[today] || 0) + 1;
+    } else {
+      delete nextCompleted[id];
+      nextActivity[today] = Math.max(0, (nextActivity[today] || 0) - 1);
+    }
+
+    // Update state synchronously to calculate new stats immediately
+    setCompleted(nextCompleted);
+    setActivity(nextActivity);
+    saveProgress(nextCompleted, nextActivity);
+
+    // Compute stats with new values
+    const statsAfter = computeStats(nextCompleted, nextActivity);
+    const checksAfter = checkAchievements(statsAfter, nextCompleted);
+
+    if (checked) {
+      showToast(`+${xp} XP`);
+
+      // level up?
+      const lvlBefore = getLevel(statsBefore.earnedXP);
+      const lvlAfter = getLevel(statsAfter.earnedXP);
+      if (lvlAfter.idx > lvlBefore.idx) {
+        setTimeout(() => {
+          showToast(`⭐ Level Up! You're now ${lvlAfter.cur.title}`, true);
+        }, 350);
+      }
+
+      // new achievements?
+      let delay = 700;
+      ACHIEVEMENTS.forEach((a) => {
+        if (checksAfter[a.id] && !checksBefore[a.id]) {
+          setTimeout(() => {
+            showToast(`${a.icon} Achievement: ${a.title}`, true);
+          }, delay);
+          delay += 700;
+        }
+      });
+    }
+  };
+
+  const handleReset = () => {
+    if (confirm("Reset all progress? This cannot be undone.")) {
+      setCompleted({});
+      setActivity({});
+      saveProgress({}, {});
+      showToast("Progress reset");
+    }
+  };
+
+  if (!isHydrated) {
+    return (
+      <div className="app">
+        <div className="loading">Loading your progress…</div>
+      </div>
+    );
+  }
+
+  const stats = computeStats(completed, activity);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+    <div className="app">
+      <Header stats={stats} />
+      <Tabs activeTab={activeTab} setActiveTab={setActiveTab} stats={stats} />
+
+      <main id="view">
+        {activeTab === "dashboard" && (
+          <Dashboard
+            stats={stats}
+            completed={completed}
+            activity={activity}
+            setActiveTab={setActiveTab}
+          />
+        )}
+        {activeTab === "ach" && (
+          <AchievementsView stats={stats} completed={completed} />
+        )}
+        {typeof activeTab === "number" && (
+          <WeekView
+            weekNum={activeTab}
+            stats={stats}
+            completed={completed}
+            onToggle={handleToggle}
+          />
+        )}
       </main>
+
+      <Footer onReset={handleReset} />
+      <ToastContainer toasts={toasts} />
     </div>
   );
 }
