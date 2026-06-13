@@ -1,14 +1,26 @@
-import React from "react";
+import React, { useState } from "react";
 import { ROADMAP, Stats, xpForDsa, AI_XP, LB_XP } from "./roadmapData";
+import NotesEditor from "./NotesEditor";
 
 interface WeekViewProps {
   weekNum: number;
   stats: Stats;
   completed: Record<string, boolean>;
   onToggle: (id: string, xp: number, checked: boolean) => void;
+  notes: Record<string, string>;
+  onSaveNote: (id: string, text: string) => void;
 }
 
-export default function WeekView({ weekNum, stats, completed, onToggle }: WeekViewProps) {
+export default function WeekView({
+  weekNum,
+  stats,
+  completed,
+  onToggle,
+  notes,
+  onSaveNote,
+}: WeekViewProps) {
+  const [expandedNotes, setExpandedNotes] = useState<Record<string, boolean>>({});
+
   const w = ROADMAP[weekNum - 1];
   if (!w) return null;
 
@@ -17,6 +29,13 @@ export default function WeekView({ weekNum, stats, completed, onToggle }: WeekVi
 
   const handleCheckboxChange = (id: string, xp: number, e: React.ChangeEvent<HTMLInputElement>) => {
     onToggle(id, xp, e.target.checked);
+  };
+
+  const toggleNotes = (id: string) => {
+    setExpandedNotes((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
   };
 
   return (
@@ -52,22 +71,32 @@ export default function WeekView({ weekNum, stats, completed, onToggle }: WeekVi
             const done = !!completed[id];
             const xp = xpForDsa(it.d);
             return (
-              <div className={`task-row ${done ? "done" : ""}`} key={id}>
-                <span className="task-day">{d.day}</span>
-                <input
-                  type="checkbox"
-                  className="checkbox"
-                  checked={done}
-                  onChange={(e) => handleCheckboxChange(id, xp, e)}
-                />
-                <div className="task-body">
-                  <div className="task-text">{it.n}</div>
-                  <div className="task-tags">
-                    <span className="tag tag-pattern">{it.p}</span>
-                    <span className={`tag tag-${it.d}`}>{it.d}</span>
+              <div key={id} className="task-wrapper-block">
+                <div
+                  className={`task-row ${done ? "done" : ""}`}
+                  style={{ cursor: "pointer" }}
+                  onClick={() => toggleNotes(id)}
+                >
+                  <span className="task-day">{d.day}</span>
+                  <input
+                    type="checkbox"
+                    className="checkbox"
+                    checked={done}
+                    onChange={(e) => handleCheckboxChange(id, xp, e)}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                  <div className="task-body">
+                    <div className="task-text">{it.n}</div>
+                    <div className="task-tags">
+                      <span className="tag tag-pattern">{it.p}</span>
+                      <span className={`tag tag-${it.d}`}>{it.d}</span>
+                    </div>
                   </div>
+                  <div className="task-xp">+{xp}</div>
                 </div>
-                <div className="task-xp">+{xp}</div>
+                {expandedNotes[id] && (
+                  <NotesEditor noteText={notes[id] || ""} onSave={(text) => onSaveNote(id, text)} />
+                )}
               </div>
             );
           })
@@ -83,17 +112,27 @@ export default function WeekView({ weekNum, stats, completed, onToggle }: WeekVi
           const id = `t-w${w.num}-ai${i}`;
           const done = !!completed[id];
           return (
-            <div className={`task-row ${done ? "done" : ""}`} key={id}>
-              <input
-                type="checkbox"
-                className="checkbox"
-                checked={done}
-                onChange={(e) => handleCheckboxChange(id, AI_XP, e)}
-              />
-              <div className="task-body">
-                <div className="task-text">{txt}</div>
+            <div key={id} className="task-wrapper-block">
+              <div
+                className={`task-row ${done ? "done" : ""}`}
+                style={{ cursor: "pointer" }}
+                onClick={() => toggleNotes(id)}
+              >
+                <input
+                  type="checkbox"
+                  className="checkbox"
+                  checked={done}
+                  onChange={(e) => handleCheckboxChange(id, AI_XP, e)}
+                  onClick={(e) => e.stopPropagation()}
+                />
+                <div className="task-body">
+                  <div className="task-text">{txt}</div>
+                </div>
+                <div className="task-xp">+{AI_XP}</div>
               </div>
-              <div className="task-xp">+{AI_XP}</div>
+              {expandedNotes[id] && (
+                <NotesEditor noteText={notes[id] || ""} onSave={(text) => onSaveNote(id, text)} />
+              )}
             </div>
           );
         })}

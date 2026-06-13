@@ -26,6 +26,7 @@ function todayStr() {
 export default function Page() {
   const [completed, setCompleted] = useState<Record<string, boolean>>({});
   const [activity, setActivity] = useState<Record<string, number>>({});
+  const [notes, setNotes] = useState<Record<string, string>>({});
   const [activeTab, setActiveTab] = useState<string | number>("dashboard");
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [isHydrated, setIsHydrated] = useState(false);
@@ -37,8 +38,35 @@ export default function Page() {
         const res = await fetch("/api/progress");
         if (res.ok) {
           const data = await res.json();
-          if (data.completed) setCompleted(data.completed);
-          if (data.activity) setActivity(data.activity);
+          
+          // Read local storage data
+          const saved = localStorage.getItem(STORAGE_KEY);
+          const localData = saved ? JSON.parse(saved) : null;
+          
+          const dbIsEmpty = !data.completed || Object.keys(data.completed).length === 0;
+          const localHasData = localData && localData.completed && Object.keys(localData.completed).length > 0;
+          
+          if (dbIsEmpty && localHasData) {
+            // Migrate local storage progress to MongoDB
+            if (localData.completed) setCompleted(localData.completed);
+            if (localData.activity) setActivity(localData.activity);
+            if (localData.notes) setNotes(localData.notes);
+            
+            // Sync to MongoDB
+            await fetch("/api/progress", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                completed: localData.completed || {},
+                activity: localData.activity || {},
+                notes: localData.notes || {}
+              }),
+            });
+          } else {
+            if (data.completed) setCompleted(data.completed);
+            if (data.activity) setActivity(data.activity);
+            if (data.notes) setNotes(data.notes);
+          }
         } else {
           // Fallback to localStorage on API error
           const saved = localStorage.getItem(STORAGE_KEY);
@@ -46,6 +74,7 @@ export default function Page() {
             const parsed = JSON.parse(saved);
             if (parsed.completed) setCompleted(parsed.completed);
             if (parsed.activity) setActivity(parsed.activity);
+            if (parsed.notes) setNotes(parsed.notes);
           }
         }
       } catch (e) {
@@ -56,6 +85,7 @@ export default function Page() {
           const parsed = JSON.parse(saved);
           if (parsed.completed) setCompleted(parsed.completed);
           if (parsed.activity) setActivity(parsed.activity);
+          if (parsed.notes) setNotes(parsed.notes);
         }
       } finally {
         setIsHydrated(true);
@@ -74,13 +104,15 @@ export default function Page() {
 
   const saveProgress = async (
     nextCompleted: Record<string, boolean>,
-    nextActivity: Record<string, number>
+    nextActivity: Record<string, number>,
+    nextNotes?: Record<string, string>
   ) => {
+    const activeNotes = nextNotes !== undefined ? nextNotes : notes;
     // Save to local storage for quick sync/offline backup
     try {
       localStorage.setItem(
         STORAGE_KEY,
-        JSON.stringify({ completed: nextCompleted, activity: nextActivity })
+        JSON.stringify({ completed: nextCompleted, activity: nextActivity, notes: activeNotes })
       );
     } catch (e) {
       console.error("Failed to save to localStorage", e);
@@ -91,7 +123,7 @@ export default function Page() {
       await fetch("/api/progress", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ completed: nextCompleted, activity: nextActivity }),
+        body: JSON.stringify({ completed: nextCompleted, activity: nextActivity, notes: activeNotes }),
       });
     } catch (e) {
       console.error("Failed to save progress to MongoDB", e);
@@ -159,11 +191,18 @@ export default function Page() {
     }
   };
 
+  const handleSaveNote = (id: string, text: string) => {
+    const nextNotes = { ...notes, [id]: text };
+    setNotes(nextNotes);
+    saveProgress(completed, activity, nextNotes);
+  };
+
   const handleReset = () => {
     if (confirm("Reset all progress? This cannot be undone.")) {
       setCompleted({});
       setActivity({});
-      saveProgress({}, {});
+      setNotes({});
+      saveProgress({}, {}, {});
       showToast("Progress reset");
     }
   };
@@ -201,6 +240,8 @@ export default function Page() {
             stats={stats}
             completed={completed}
             onToggle={handleToggle}
+            notes={notes}
+            onSaveNote={handleSaveNote}
           />
         )}
       </main>
