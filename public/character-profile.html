@@ -1695,7 +1695,7 @@ function updateStats(raw) {
   /* Equipped Avatar selection logic */
   let prevMaxUnlockedTier = -1;
   if (_currentLevelIdx !== -1) {
-    prevMaxUnlockedTier = LEVELS[_currentLevelIdx].cur.tier;
+    prevMaxUnlockedTier = LEVELS[_currentLevelIdx].tier;
   }
 
   let equippedTier = parseInt(SafeStorage.getItem('equipped_tier'));
