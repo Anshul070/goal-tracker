@@ -1498,6 +1498,25 @@ function setHTML(id, html) {
   if (el) el.innerHTML = html;
 }
 
+const SafeStorage = {
+  getItem: function(key) {
+    try {
+      return localStorage.getItem(key);
+    } catch (e) {
+      console.warn("localStorage.getItem failed:", e);
+      return window['__safe_fallback_' + key] || null;
+    }
+  },
+  setItem: function(key, value) {
+    try {
+      localStorage.setItem(key, value);
+    } catch (e) {
+      console.warn("localStorage.setItem failed:", e);
+    }
+    window['__safe_fallback_' + key] = value;
+  }
+};
+
 function getTierUnlockXp(tier) {
   for (const lvl of LEVELS) {
     if (lvl.tier === tier) return lvl.xp;
@@ -1523,11 +1542,10 @@ function renderAvatarSlots(maxUnlocked, equipped) {
     const isLocked = av.tier > maxUnlocked;
     const isEquipped = av.tier === equipped;
     const className = `avatar-slot${isLocked ? ' locked' : ''}${isEquipped ? ' active' : ''}`;
-    const clickAttr = isLocked ? '' : `onclick="selectAvatar(${av.tier})"`;
     const tooltip = isLocked ? `Locked: Unlocks at ${getTierUnlockXp(av.tier)} XP` : `${av.title}${isEquipped ? ' (Equipped)' : ''}`;
 
     html += `
-      <button class="${className}" ${clickAttr} title="${tooltip}">
+      <button class="${className}" data-tier="${av.tier}" title="${tooltip}">
         <span class="avatar-emoji">${av.emoji}</span>
         ${isLocked ? '<span class="avatar-lock">🔒</span>' : ''}
       </button>
@@ -1535,14 +1553,24 @@ function renderAvatarSlots(maxUnlocked, equipped) {
   });
 
   container.innerHTML = html;
+
+  // Add click event listeners dynamically to unlocked slots
+  container.querySelectorAll('.avatar-slot:not(.locked)').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      const tier = parseInt(this.getAttribute('data-tier'));
+      selectAvatar(tier);
+    });
+  });
 }
 
-window.selectAvatar = function(tier) {
-  localStorage.setItem('equipped_tier', tier);
+function selectAvatar(tier) {
+  SafeStorage.setItem('equipped_tier', tier);
   if (window.lastRawStats) {
     updateStats(window.lastRawStats);
   }
-};
+}
+window.selectAvatar = selectAvatar;
 
 function getLevelInfo(xp) {
   let idx = 0;
@@ -1670,18 +1698,18 @@ function updateStats(raw) {
     prevMaxUnlockedTier = LEVELS[_currentLevelIdx].cur.tier;
   }
 
-  let equippedTier = parseInt(localStorage.getItem('equipped_tier'));
+  let equippedTier = parseInt(SafeStorage.getItem('equipped_tier'));
   if (isNaN(equippedTier) || equippedTier < 0) {
     equippedTier = maxUnlockedTier;
-    localStorage.setItem('equipped_tier', equippedTier);
+    SafeStorage.setItem('equipped_tier', equippedTier);
   } else if (equippedTier > maxUnlockedTier) {
     equippedTier = maxUnlockedTier;
-    localStorage.setItem('equipped_tier', equippedTier);
+    SafeStorage.setItem('equipped_tier', equippedTier);
   } else if (!_isFirstRender && maxUnlockedTier > prevMaxUnlockedTier) {
     const wasEquippedMax = (equippedTier === prevMaxUnlockedTier);
     if (wasEquippedMax) {
       equippedTier = maxUnlockedTier;
-      localStorage.setItem('equipped_tier', equippedTier);
+      SafeStorage.setItem('equipped_tier', equippedTier);
     }
   }
 
