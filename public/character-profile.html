@@ -562,7 +562,20 @@ svg { display: block; }
 .lvl-banner-icon { font-size: 26px; }
 .lvl-banner-text strong { font-size: 15px; font-weight: 800; color: var(--gold); display: block; }
 .lvl-banner-text span { font-size: 12px; color: var(--text-dim); }
+/* ── Embedded mode: hide top bar when inside the Next.js iframe ── */
+body.embedded .hero-bar { display: none; }
+body.embedded .page-inner { padding-top: 12px; }
 </style>
+
+<!-- Detect embedded mode ASAP to avoid flash -->
+<script>
+(function() {
+  try {
+    var p = new URLSearchParams(window.location.search);
+    if (p.get('embedded') === '1') document.body.classList.add('embedded');
+  } catch(e) {}
+})();
+</script>
 </head>
 <body>
 <!-- ============================================================
