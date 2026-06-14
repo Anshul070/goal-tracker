@@ -562,6 +562,80 @@ svg { display: block; }
 .lvl-banner-icon { font-size: 26px; }
 .lvl-banner-text strong { font-size: 15px; font-weight: 800; color: var(--gold); display: block; }
 .lvl-banner-text span { font-size: 12px; color: var(--text-dim); }
+
+/* ============================================================
+   AVATARS SELECTOR
+   ============================================================ */
+.char-left-col {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.avatars-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+}
+.avatars-title {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-xs);
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+.avatar-slots {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+}
+.avatar-slot {
+  background: var(--bg-elev);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+}
+.avatar-slot:hover:not(.locked) {
+  border-color: var(--tier-accent);
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.03);
+}
+.avatar-slot.active {
+  border-color: var(--tier-accent);
+  box-shadow: 0 0 8px var(--tier-glow);
+  background: rgba(255, 255, 255, 0.05);
+}
+.avatar-slot.locked {
+  opacity: 0.35;
+  cursor: not-allowed;
+  background: var(--bg-card);
+  border-style: dashed;
+}
+.avatar-slot .avatar-lock {
+  position: absolute;
+  bottom: -3px;
+  right: -3px;
+  font-size: 9px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-radius: 50%;
+  width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.avatar-emoji {
+  user-select: none;
+}
 </style>
 </head>
 <body>
@@ -593,19 +667,30 @@ svg { display: block; }
     <!-- MAIN GRID -->
     <div class="hero-main">
 
-      <!-- ── CHARACTER PANEL (SVG injected by Part 2) ── -->
-      <div class="char-panel" id="charPanel">
-        <div class="char-spotlight"></div>
-        <div class="char-svg-wrap">
-          <!-- SVG inserted here by Part 2 -->
-          <div id="charSvgMount"></div>
-        </div>
-        <div class="char-nameplate">
-          <div class="char-name-stack">
-            <div class="char-display-name">Anshul Saini</div>
-            <div class="char-tier-title" id="charTierTitle">Fresh Graduate</div>
+      <!-- ── LEFT COLUMN ── -->
+      <div class="char-left-col">
+        <!-- ── CHARACTER PANEL (SVG injected by Part 2) ── -->
+        <div class="char-panel" id="charPanel">
+          <div class="char-spotlight"></div>
+          <div class="char-svg-wrap">
+            <!-- SVG inserted here by Part 2 -->
+            <div id="charSvgMount"></div>
           </div>
-          <div class="char-lv-badge" id="charLvBadge">LV 1 / 11</div>
+          <div class="char-nameplate">
+            <div class="char-name-stack">
+              <div class="char-display-name">Anshul Saini</div>
+              <div class="char-tier-title" id="charTierTitle">Fresh Graduate</div>
+            </div>
+            <div class="char-lv-badge" id="charLvBadge">LV 1 / 11</div>
+          </div>
+        </div>
+
+        <!-- ── AVATARS SELECTOR ── -->
+        <div class="avatars-card" id="avatarsCard">
+          <div class="avatars-title">Equip Avatar</div>
+          <div class="avatar-slots" id="avatarSlots">
+            <!-- Slots will be injected dynamically -->
+          </div>
         </div>
       </div>
 
@@ -1413,6 +1498,52 @@ function setHTML(id, html) {
   if (el) el.innerHTML = html;
 }
 
+function getTierUnlockXp(tier) {
+  for (const lvl of LEVELS) {
+    if (lvl.tier === tier) return lvl.xp;
+  }
+  return 0;
+}
+
+function renderAvatarSlots(maxUnlocked, equipped) {
+  const container = $id('avatarSlots');
+  if (!container) return;
+
+  const AVATARS = [
+    { tier: 0, emoji: "🌱", title: "Fresh Graduate" },
+    { tier: 1, emoji: "🔢", title: "Junior Dev" },
+    { tier: 2, emoji: "🔍", title: "AI Builder" },
+    { tier: 3, emoji: "🤖", title: "Agent Architect" },
+    { tier: 4, emoji: "🛠️", title: "Hacker Elite" },
+    { tier: 5, emoji: "🏆", title: "Staff Engineer" }
+  ];
+
+  let html = '';
+  AVATARS.forEach(av => {
+    const isLocked = av.tier > maxUnlocked;
+    const isEquipped = av.tier === equipped;
+    const className = `avatar-slot${isLocked ? ' locked' : ''}${isEquipped ? ' active' : ''}`;
+    const clickAttr = isLocked ? '' : `onclick="selectAvatar(${av.tier})"`;
+    const tooltip = isLocked ? `Locked: Unlocks at ${getTierUnlockXp(av.tier)} XP` : `${av.title}${isEquipped ? ' (Equipped)' : ''}`;
+
+    html += `
+      <button class="${className}" ${clickAttr} title="${tooltip}">
+        <span class="avatar-emoji">${av.emoji}</span>
+        ${isLocked ? '<span class="avatar-lock">🔒</span>' : ''}
+      </button>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
+window.selectAvatar = function(tier) {
+  localStorage.setItem('equipped_tier', tier);
+  if (window.lastRawStats) {
+    updateStats(window.lastRawStats);
+  }
+};
+
 function getLevelInfo(xp) {
   let idx = 0;
   for (let i = 0; i < LEVELS.length; i++) {
@@ -1509,6 +1640,7 @@ function setStat(valId, barId, value, total) {
    ============================================================ */
 function updateStats(raw) {
   raw = raw || {};
+  window.lastRawStats = raw;
 
   /* Clamp inputs */
   const xp             = Math.max(0, Math.min(TOTAL_XP, parseInt(raw.xp)             || 0));
@@ -1524,7 +1656,7 @@ function updateStats(raw) {
   const lvl    = getLevelInfo(xp);
   const unlock = getNextUnlock(xp);
   const mission = getMission(lvl.idx);
-  const newTier = lvl.cur.tier;
+  const maxUnlockedTier = lvl.cur.tier;
   const didLevelUp = !_isFirstRender && lvl.idx > _currentLevelIdx;
 
   /* Level-up animation */
@@ -1532,8 +1664,29 @@ function updateStats(raw) {
     setTimeout(() => fireLevelUp(lvl.cur.title, lvl.cur.icon), 420);
   }
 
+  /* Equipped Avatar selection logic */
+  let prevMaxUnlockedTier = -1;
+  if (_currentLevelIdx !== -1) {
+    prevMaxUnlockedTier = LEVELS[_currentLevelIdx].cur.tier;
+  }
+
+  let equippedTier = parseInt(localStorage.getItem('equipped_tier'));
+  if (isNaN(equippedTier) || equippedTier < 0) {
+    equippedTier = maxUnlockedTier;
+    localStorage.setItem('equipped_tier', equippedTier);
+  } else if (equippedTier > maxUnlockedTier) {
+    equippedTier = maxUnlockedTier;
+    localStorage.setItem('equipped_tier', equippedTier);
+  } else if (!_isFirstRender && maxUnlockedTier > prevMaxUnlockedTier) {
+    const wasEquippedMax = (equippedTier === prevMaxUnlockedTier);
+    if (wasEquippedMax) {
+      equippedTier = maxUnlockedTier;
+      localStorage.setItem('equipped_tier', equippedTier);
+    }
+  }
+
   /* Tier + character SVG */
-  switchTier(newTier);
+  switchTier(equippedTier);
 
   /* ── Top bar ── */
   setText('lvIcon',   lvl.cur.icon);
@@ -1542,7 +1695,7 @@ function updateStats(raw) {
   setText('streakVal', streak);
 
   /* ── Character nameplate ── */
-  setText('charTierTitle', TIER_NAMES[newTier]);
+  setText('charTierTitle', TIER_NAMES[equippedTier]);
   setText('charLvBadge',   'LV ' + (lvl.idx + 1) + ' / 11');
 
   /* ── XP block ── */
@@ -1575,6 +1728,9 @@ function updateStats(raw) {
   /* ── Active quest ── */
   setText('missionText', mission.text);
   setText('missionWk',   'W' + mission.week);
+
+  /* ── Render Avatars slots ── */
+  renderAvatarSlots(maxUnlockedTier, equippedTier);
 
   /* Persist state */
   _currentLevelIdx = lvl.idx;
