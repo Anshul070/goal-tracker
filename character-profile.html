@@ -1524,6 +1524,27 @@ function getTierUnlockXp(tier) {
   return 0;
 }
 
+window.persistentPreviewTier = null;
+
+function enterPersistentPreview(tier) {
+  document.removeEventListener('click', revertPersistentPreview);
+  window.persistentPreviewTier = tier;
+  switchTier(tier);
+  setText('charTierTitle', TIER_NAMES[tier] + " (Preview)");
+  setTimeout(() => {
+    document.addEventListener('click', revertPersistentPreview, { once: true });
+  }, 20);
+}
+
+function revertPersistentPreview() {
+  if (window.persistentPreviewTier === null || window.persistentPreviewTier === undefined) return;
+  window.persistentPreviewTier = null;
+  const currentEquipped = parseInt(SafeStorage.getItem('equipped_tier')) || 0;
+  switchTier(currentEquipped);
+  setText('charTierTitle', TIER_NAMES[currentEquipped]);
+  document.removeEventListener('click', revertPersistentPreview);
+}
+
 function renderAvatarSlots(maxUnlocked, equipped) {
   const container = $id('avatarSlots');
   if (!container) return;
@@ -1554,12 +1575,39 @@ function renderAvatarSlots(maxUnlocked, equipped) {
 
   container.innerHTML = html;
 
-  // Add click event listeners dynamically to unlocked slots
-  container.querySelectorAll('.avatar-slot:not(.locked)').forEach(btn => {
+  // Add click & hover event listeners dynamically to slots
+  container.querySelectorAll('.avatar-slot').forEach(btn => {
+    const tier = parseInt(btn.getAttribute('data-tier'));
+    const isLocked = btn.classList.contains('locked');
+
+    // Hover Enter
+    btn.addEventListener('mouseenter', function() {
+      if (window.persistentPreviewTier !== undefined && window.persistentPreviewTier !== null) return;
+      switchTier(tier);
+      setText('charTierTitle', TIER_NAMES[tier] + " (Preview)");
+    });
+
+    // Hover Leave
+    btn.addEventListener('mouseleave', function() {
+      if (window.persistentPreviewTier !== undefined && window.persistentPreviewTier !== null) return;
+      const currentEquipped = parseInt(SafeStorage.getItem('equipped_tier')) || 0;
+      switchTier(currentEquipped);
+      setText('charTierTitle', TIER_NAMES[currentEquipped]);
+    });
+
+    // Click / Tap (handles mobile too)
     btn.addEventListener('click', function(e) {
       e.preventDefault();
-      const tier = parseInt(this.getAttribute('data-tier'));
-      selectAvatar(tier);
+      e.stopPropagation();
+
+      if (isLocked) {
+        // Locked: Enter persistent preview mode (especially for mobile)
+        enterPersistentPreview(tier);
+      } else {
+        // Unlocked: Equip avatar
+        revertPersistentPreview();
+        selectAvatar(tier);
+      }
     });
   });
 }
