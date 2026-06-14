@@ -24,6 +24,14 @@ export default function Tabs({ activeTab, setActiveTab, stats }: TabsProps) {
         Dashboard
       </button>
 
+      <button
+        className={`tab tab-character ${activeTab === "character" ? "active" : ""}`}
+        onClick={() => handleTabClick("character")}
+        title="Hero Profile"
+      >
+        ⚔️ Hero
+      </button>
+
       {weeks.map((num) => {
         const pw = stats.perWeek[num];
         const done = pw && pw.done === pw.total;

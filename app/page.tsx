@@ -13,6 +13,7 @@ import Tabs from "../components/Tabs";
 import Dashboard from "../components/Dashboard";
 import WeekView from "../components/WeekView";
 import AchievementsView from "../components/AchievementsView";
+import CharacterView from "../components/CharacterView";
 import Footer from "../components/Footer";
 import ToastContainer, { Toast } from "../components/ToastContainer";
 
@@ -233,6 +234,9 @@ export default function Page() {
         )}
         {activeTab === "ach" && (
           <AchievementsView stats={stats} completed={completed} />
+        )}
+        {activeTab === "character" && (
+          <CharacterView stats={stats} completed={completed} />
         )}
         {typeof activeTab === "number" && (
           <WeekView

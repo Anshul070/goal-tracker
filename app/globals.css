@@ -1069,3 +1069,115 @@ body {
   border-radius: 4px;
 }
 
+/* ============================================================
+   CHARACTER / HERO PROFILE VIEW
+   ============================================================ */
+.character-view-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: #080B12;
+  min-height: 600px;
+}
+
+.character-view-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 18px;
+  background: #0F1420;
+  border-bottom: 1px solid rgba(167, 139, 250, 0.2);
+}
+
+.character-view-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: #E6E9F4;
+}
+
+.character-view-icon {
+  font-size: 18px;
+}
+
+.character-view-stats-summary {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.cv-pill {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+}
+
+.cv-pill-dsa {
+  background: rgba(167, 139, 250, 0.12);
+  color: #A78BFA;
+  border: 1px solid rgba(167, 139, 250, 0.25);
+}
+
+.cv-pill-ai {
+  background: rgba(69, 214, 196, 0.12);
+  color: #45D6C4;
+  border: 1px solid rgba(69, 214, 196, 0.25);
+}
+
+.cv-pill-letbex {
+  background: rgba(255, 139, 107, 0.12);
+  color: #FF8B6B;
+  border: 1px solid rgba(255, 139, 107, 0.25);
+}
+
+.cv-pill-xp {
+  background: rgba(242, 184, 75, 0.12);
+  color: #F2B84B;
+  border: 1px solid rgba(242, 184, 75, 0.25);
+}
+
+.character-iframe {
+  width: 100%;
+  min-height: 820px;
+  border: none;
+  display: block;
+  background: #080B12;
+}
+
+/* Hero tab special styling */
+.tab.tab-character {
+  background: linear-gradient(135deg, rgba(167, 139, 250, 0.15), rgba(69, 214, 196, 0.10));
+  border-color: rgba(167, 139, 250, 0.3);
+  color: #A78BFA;
+}
+
+.tab.tab-character:hover,
+.tab.tab-character.active {
+  background: linear-gradient(135deg, rgba(167, 139, 250, 0.28), rgba(69, 214, 196, 0.18));
+  border-color: #A78BFA;
+  color: #C4B5FD;
+}
+
+@media (max-width: 600px) {
+  .character-view-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .character-iframe {
+    min-height: 1100px;
+  }
+}

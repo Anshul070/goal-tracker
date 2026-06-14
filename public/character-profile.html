@@ -1,0 +1,1651 @@
+<!DOCTYPE html>
+<!--
+  ╔══════════════════════════════════════════════════════════╗
+  ║  character-profile.html — Anshul Saini Hero Page        ║
+  ║  Built with: CSS (Part 1) · SVG tiers (Part 2) ·        ║
+  ║              JS logic (Part 3)                           ║
+  ║                                                          ║
+  ║  HOW TO CONNECT FROM NEXT.JS:                           ║
+  ║  Option A — postMessage (iframe):                        ║
+  ║    iframe.contentWindow.postMessage({                    ║
+  ║      type: 'HERO_UPDATE',                               ║
+  ║      stats: { xp, dsaSolved, aiCompleted,               ║
+  ║               letbexCompleted, streak, overallPct }      ║
+  ║    }, '*');                                              ║
+  ║                                                          ║
+  ║  Option B — direct call (iframe):                        ║
+  ║    iframe.contentWindow.updateHeroStats(stats);          ║
+  ║                                                          ║
+  ║  Option C — URL params (iframe src):                     ║
+  ║    ?xp=330&dsa=12&ai=3&letbex=2&streak=1&pct=12         ║
+  ╚══════════════════════════════════════════════════════════╝
+-->
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anshul Saini — Hero Profile</title>
+<style>
+/* ============================================================
+   TOKENS
+   ============================================================ */
+:root {
+  --bg:       #080B12;
+  --bg-elev:  #0F1420;
+  --bg-card:  #131928;
+  --border:   #1E2638;
+  --border-soft: #161F2E;
+
+  --text:     #E6E9F4;
+  --text-dim: #7A859A;
+  --text-xs:  #4A5568;
+
+  --purple:   #A78BFA;
+  --purple-d: #6D28D9;
+  --teal:     #45D6C4;
+  --teal-d:   #0E9488;
+  --gold:     #F2B84B;
+  --gold-d:   #B45309;
+  --coral:    #FF8B6B;
+  --green:    #5EE6A0;
+  --red:      #FF6B6B;
+
+  /* Tier spotlight vars — overridden per tier */
+  --tier-hue:    210;
+  --tier-sat:    20%;
+  --tier-spot:   rgba(107,114,128,0.12);
+  --tier-glow:   rgba(107,114,128,0.0);
+  --tier-char:   rgba(107,114,128,0.0);
+  --tier-border: #1E2638;
+  --tier-accent: #6B7280;
+  --tier-text:   #8A93A6;
+
+  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --font-ui: -apple-system, 'Segoe UI', system-ui, sans-serif;
+  --radius: 16px;
+  --radius-sm: 10px;
+}
+
+/* ── per-tier overrides (applied to .page) ── */
+.page[data-tier="0"] {
+  --tier-spot:   rgba(107,114,128,0.08);
+  --tier-glow:   rgba(107,114,128,0.0);
+  --tier-char:   rgba(107,114,128,0.08);
+  --tier-border: #252D3A;
+  --tier-accent: #6B7280;
+  --tier-text:   #9CA3AF;
+}
+.page[data-tier="1"] {
+  --tier-spot:   rgba(59,130,246,0.10);
+  --tier-glow:   rgba(59,130,246,0.08);
+  --tier-char:   rgba(59,130,246,0.10);
+  --tier-border: #1E3A5F;
+  --tier-accent: #60A5FA;
+  --tier-text:   #93C5FD;
+}
+.page[data-tier="2"] {
+  --tier-spot:   rgba(167,139,250,0.14);
+  --tier-glow:   rgba(167,139,250,0.20);
+  --tier-char:   rgba(167,139,250,0.18);
+  --tier-border: #4C1D95;
+  --tier-accent: #A78BFA;
+  --tier-text:   #C4B5FD;
+}
+.page[data-tier="3"] {
+  --tier-spot:   rgba(69,214,196,0.14);
+  --tier-glow:   rgba(69,214,196,0.25);
+  --tier-char:   rgba(69,214,196,0.18);
+  --tier-border: #0E5A53;
+  --tier-accent: #45D6C4;
+  --tier-text:   #7FEFDE;
+}
+.page[data-tier="4"] {
+  --tier-spot:   rgba(69,214,196,0.18);
+  --tier-glow:   rgba(167,139,250,0.35);
+  --tier-char:   rgba(69,214,196,0.22);
+  --tier-border: #1E40AF;
+  --tier-accent: #45D6C4;
+  --tier-text:   #7FEFDE;
+}
+.page[data-tier="5"] {
+  --tier-spot:   rgba(242,184,75,0.18);
+  --tier-glow:   rgba(242,184,75,0.45);
+  --tier-char:   rgba(242,184,75,0.25);
+  --tier-border: #92400E;
+  --tier-accent: #F2B84B;
+  --tier-text:   #FDE68A;
+}
+
+/* ============================================================
+   RESET + BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+svg { display: block; }
+
+/* ============================================================
+   PAGE SHELL
+   ============================================================ */
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(ellipse 70% 55% at 35% 55%, var(--tier-spot) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 40% at 80% 30%, var(--tier-glow) 0%, transparent 60%),
+    var(--bg);
+  transition: background 0.8s ease;
+}
+
+/* Scanline texture overlay */
+.page::before {
+  content: '';
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.06) 2px,
+    rgba(0,0,0,0.06) 4px
+  );
+}
+
+.page-inner {
+  position: relative; z-index: 1;
+  max-width: 960px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 28px 20px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ============================================================
+   TOP HEADER BAR
+   ============================================================ */
+.hero-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.hero-bar-left {
+  display: flex; align-items: center; gap: 14px;
+}
+.hero-avatar-mark {
+  width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--purple-d), var(--teal-d));
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-weight: 800; font-size: 14px;
+  color: #E6E9F4; letter-spacing: -0.02em;
+  border: 1px solid var(--tier-border);
+  transition: border-color 0.6s ease;
+}
+.hero-name {
+  font-size: 22px; font-weight: 800; letter-spacing: -0.02em; line-height: 1;
+}
+.hero-handle {
+  font-family: var(--font-mono); font-size: 11.5px;
+  color: var(--text-dim); letter-spacing: 0.06em;
+  text-transform: uppercase; margin-top: 3px;
+}
+
+.hero-bar-right {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.level-pill {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--bg-card); border: 1px solid var(--tier-border);
+  border-radius: 999px; padding: 7px 16px 7px 10px;
+  transition: border-color 0.6s ease;
+}
+.level-pill .lv-icon {
+  width: 26px; height: 26px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--tier-accent), transparent);
+  border: 1px solid var(--tier-border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; flex-shrink: 0;
+  transition: background 0.6s ease;
+}
+.level-pill .lv-num {
+  font-family: var(--font-mono); font-size: 11px; font-weight: 800;
+  color: var(--tier-accent); letter-spacing: 0.04em;
+  transition: color 0.6s ease;
+}
+.level-pill .lv-title {
+  font-size: 12.5px; font-weight: 700; color: var(--text);
+}
+
+.streak-pill {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 999px; padding: 7px 14px;
+  font-family: var(--font-mono); font-size: 13.5px; font-weight: 800;
+  color: var(--gold);
+}
+
+/* ============================================================
+   MAIN GRID
+   ============================================================ */
+.hero-main {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 18px;
+  align-items: start;
+}
+@media (max-width: 740px) {
+  .hero-main { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
+   CHARACTER PANEL
+   ============================================================ */
+.char-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--tier-border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  position: relative;
+  transition: border-color 0.6s ease;
+}
+
+/* Spotlight gradient behind character */
+.char-spotlight {
+  position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(
+    ellipse 70% 65% at 48% 42%,
+    var(--tier-char),
+    transparent 68%
+  );
+  transition: background 0.8s ease;
+  z-index: 0;
+}
+
+/* Corner accent lines */
+.char-panel::before, .char-panel::after {
+  content: '';
+  position: absolute;
+  z-index: 2; pointer-events: none;
+  transition: border-color 0.6s ease;
+}
+.char-panel::before {
+  top: 10px; left: 10px;
+  width: 24px; height: 24px;
+  border-top: 2px solid var(--tier-accent);
+  border-left: 2px solid var(--tier-accent);
+  border-radius: 3px 0 0 0;
+}
+.char-panel::after {
+  bottom: 10px; right: 10px;
+  width: 24px; height: 24px;
+  border-bottom: 2px solid var(--tier-accent);
+  border-right: 2px solid var(--tier-accent);
+  border-radius: 0 0 3px 0;
+}
+
+.char-svg-wrap {
+  position: relative; z-index: 1;
+  padding: 18px 18px 0;
+  display: flex; justify-content: center;
+}
+
+/* Character idle: subtle bob */
+.char-idle {
+  animation: char-bob 4s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+@keyframes char-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+/* Weapon float */
+.weapon-group {
+  animation: weapon-float 3s ease-in-out infinite;
+  transform-origin: center;
+}
+@keyframes weapon-float {
+  0%, 100% { transform: translateY(0) rotate(-3deg); }
+  50% { transform: translateY(-9px) rotate(4deg); }
+}
+
+/* Tier glow on SVG (applied to char-svg-wrap) */
+.page[data-tier="0"] .char-idle { filter: none; }
+.page[data-tier="1"] .char-idle { filter: drop-shadow(0 0 4px rgba(96,165,250,0.18)); }
+.page[data-tier="2"] .char-idle { filter: drop-shadow(0 0 10px rgba(167,139,250,0.40)); }
+.page[data-tier="3"] .char-idle { filter: drop-shadow(0 0 14px rgba(69,214,196,0.45)); }
+.page[data-tier="4"] .char-idle { filter: drop-shadow(0 0 20px rgba(69,214,196,0.55)) drop-shadow(0 0 40px rgba(167,139,250,0.30)); }
+.page[data-tier="5"] .char-idle { filter: drop-shadow(0 0 28px rgba(242,184,75,0.70)) drop-shadow(0 0 55px rgba(167,139,250,0.35)); animation: char-bob 4s ease-in-out infinite, legendary-pulse 2.5s ease-in-out infinite; }
+
+@keyframes legendary-pulse {
+  0%, 100% { filter: drop-shadow(0 0 28px rgba(242,184,75,0.70)) drop-shadow(0 0 55px rgba(167,139,250,0.35)); }
+  50% { filter: drop-shadow(0 0 38px rgba(242,184,75,0.95)) drop-shadow(0 0 70px rgba(167,139,250,0.55)); }
+}
+
+/* Tier 5 special: orbiting particles in SVG */
+.orbit-ring {
+  transform-origin: 187px 130px;
+  animation: orbit-spin 4s linear infinite;
+}
+.orbit-ring-2 {
+  transform-origin: 187px 130px;
+  animation: orbit-spin 6s linear infinite reverse;
+}
+@keyframes orbit-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Tier visibility */
+[class^="char-tier-"] { display: none; }
+.char-tier-active { display: block; }
+
+/* Nameplate */
+.char-nameplate {
+  position: relative; z-index: 2;
+  padding: 14px 18px 18px;
+  border-top: 1px solid var(--border-soft);
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+}
+.char-name-stack {}
+.char-display-name {
+  font-size: 16px; font-weight: 800; letter-spacing: -0.01em; line-height: 1.1;
+}
+.char-tier-title {
+  font-family: var(--font-mono); font-size: 10.5px;
+  color: var(--tier-accent); text-transform: uppercase; letter-spacing: 0.1em;
+  margin-top: 3px; transition: color 0.6s ease;
+}
+.char-lv-badge {
+  background: var(--bg-elev); border: 1px solid var(--tier-border);
+  border-radius: 8px; padding: 6px 12px;
+  font-family: var(--font-mono); font-size: 13px; font-weight: 800;
+  color: var(--tier-accent); flex-shrink: 0;
+  transition: border-color 0.6s ease, color 0.6s ease;
+}
+
+/* ============================================================
+   STATS PANEL
+   ============================================================ */
+.stats-panel {
+  display: flex; flex-direction: column; gap: 14px;
+}
+
+/* ── XP Block ── */
+.xp-block {
+  background: var(--bg-card); border: 1px solid var(--border-soft);
+  border-radius: var(--radius); padding: 18px 20px;
+}
+.xp-row {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+  margin-bottom: 10px;
+}
+.xp-earned {
+  font-family: var(--font-mono); font-size: 32px; font-weight: 800;
+  color: var(--tier-accent); letter-spacing: -0.02em; line-height: 1;
+  transition: color 0.6s ease;
+}
+.xp-label { font-size: 11px; color: var(--text-xs); text-transform: uppercase; letter-spacing: 0.08em; }
+.xp-total { font-family: var(--font-mono); font-size: 12px; color: var(--text-dim); }
+
+.xp-track {
+  position: relative; height: 10px; border-radius: 999px;
+  background: var(--bg-elev); border: 1px solid var(--border-soft); overflow: hidden;
+}
+.xp-fill {
+  position: absolute; top: 0; left: 0; height: 100%;
+  background: linear-gradient(90deg, var(--purple-d), var(--tier-accent));
+  border-radius: 999px;
+  width: 0%;
+  transition: width 1s cubic-bezier(0.25, 0.8, 0.25, 1), background 0.6s ease;
+}
+.xp-fill::after {
+  content: '';
+  position: absolute; right: 0; top: 0; bottom: 0; width: 20px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25));
+  border-radius: 999px;
+}
+.xp-lvl-row {
+  display: flex; justify-content: space-between; margin-top: 7px;
+  font-family: var(--font-mono); font-size: 10px; color: var(--text-xs);
+}
+
+/* ── Stat Grid ── */
+.stat-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+}
+.stat-card {
+  background: var(--bg-card); border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm); padding: 14px 16px;
+  position: relative; overflow: hidden;
+  transition: border-color 0.3s;
+}
+.stat-card:hover { border-color: var(--tier-border); }
+.stat-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--tier-accent), transparent);
+  opacity: 0; transition: opacity 0.3s;
+}
+.stat-card:hover::before { opacity: 1; }
+.stat-icon { font-size: 18px; margin-bottom: 8px; }
+.stat-value {
+  font-family: var(--font-mono); font-size: 24px; font-weight: 800;
+  letter-spacing: -0.02em; line-height: 1; color: var(--text);
+}
+.stat-value em { font-style: normal; font-size: 12px; color: var(--text-dim); font-weight: 400; }
+.stat-label { font-size: 11px; color: var(--text-xs); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 5px; }
+.stat-bar {
+  margin-top: 8px; height: 3px; border-radius: 999px; background: var(--bg-elev); overflow: hidden;
+}
+.stat-bar-fill {
+  height: 100%; border-radius: 999px;
+  transition: width 1s ease;
+}
+.stat-dsa .stat-bar-fill { background: var(--purple); }
+.stat-ai .stat-bar-fill  { background: var(--teal); }
+.stat-lb .stat-bar-fill  { background: var(--coral); }
+.stat-pct .stat-bar-fill { background: var(--green); }
+
+/* ── Next Unlock ── */
+.next-unlock {
+  background: var(--bg-card); border: 1px solid var(--border-soft);
+  border-radius: var(--radius); padding: 16px 18px;
+  display: flex; align-items: center; gap: 14px;
+}
+.unlock-icon {
+  width: 42px; height: 42px; border-radius: 10px; flex-shrink: 0;
+  background: linear-gradient(135deg, rgba(167,139,250,0.15), rgba(69,214,196,0.15));
+  border: 1px solid var(--border); display: flex; align-items: center;
+  justify-content: center; font-size: 20px;
+}
+.unlock-body { flex: 1; min-width: 0; }
+.unlock-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-xs); font-weight: 700; margin-bottom: 3px; }
+.unlock-title { font-size: 14px; font-weight: 700; }
+.unlock-sub { font-size: 11.5px; color: var(--text-dim); margin-top: 2px; }
+.unlock-xp {
+  flex-shrink: 0; font-family: var(--font-mono); font-size: 11px; font-weight: 800;
+  color: var(--gold); background: rgba(242,184,75,0.10);
+  border: 1px solid rgba(242,184,75,0.25); border-radius: 8px; padding: 5px 10px;
+}
+
+/* ── Skills row (compact badges) ── */
+.skills-row {
+  background: var(--bg-card); border: 1px solid var(--border-soft);
+  border-radius: var(--radius); padding: 14px 18px;
+}
+.skills-title { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-xs); font-weight: 700; margin-bottom: 10px; }
+.skills-chips { display: flex; gap: 7px; flex-wrap: wrap; }
+.skill-chip {
+  font-family: var(--font-mono); font-size: 10.5px; font-weight: 700;
+  padding: 4px 10px; border-radius: 6px; letter-spacing: 0.03em;
+}
+.sk-ts   { background: rgba(96,165,250,0.12); color: #60A5FA; }
+.sk-react{ background: rgba(69,214,196,0.12); color: #45D6C4; }
+.sk-node { background: rgba(94,230,160,0.12); color: #5EE6A0; }
+.sk-pg   { background: rgba(167,139,250,0.12); color: #A78BFA; }
+.sk-ai   { background: rgba(242,184,75,0.12);  color: #F2B84B; }
+.sk-next { background: rgba(255,139,107,0.12); color: #FF8B6B; }
+.sk-docker { background: rgba(107,114,128,0.15); color: #9CA3AF; }
+
+/* ============================================================
+   BOTTOM MISSION BAR
+   ============================================================ */
+.mission-bar {
+  background: var(--bg-card); border: 1px solid var(--border-soft);
+  border-radius: var(--radius); padding: 16px 20px;
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+}
+.mission-label {
+  font-family: var(--font-mono); font-size: 10px; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 0.12em; color: var(--tier-accent);
+  flex-shrink: 0; min-width: 70px;
+  transition: color 0.6s ease;
+}
+.mission-text { font-size: 13.5px; color: var(--text-dim); flex: 1; line-height: 1.4; }
+.mission-wk {
+  flex-shrink: 0; font-family: var(--font-mono); font-size: 11px; font-weight: 800;
+  padding: 5px 12px; border-radius: 8px;
+  background: rgba(167,139,250,0.10); color: var(--purple); border: 1px solid rgba(167,139,250,0.25);
+}
+
+/* ============================================================
+   LEVEL-UP FLASH
+   ============================================================ */
+.levelup-flash {
+  position: fixed; inset: 0; z-index: 999; pointer-events: none;
+  background: radial-gradient(ellipse 80% 60% at 50% 50%, rgba(167,139,250,0.3), transparent 60%);
+  opacity: 0;
+}
+.levelup-flash.firing {
+  animation: lvlup-anim 0.8s ease forwards;
+}
+@keyframes lvlup-anim {
+  0%   { opacity: 0; }
+  25%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* ============================================================
+   LEVEL-UP BANNER
+   ============================================================ */
+.lvl-banner {
+  position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+  z-index: 1000; background: var(--bg-card); border: 1.5px solid var(--gold);
+  border-radius: 14px; padding: 14px 24px;
+  display: flex; align-items: center; gap: 12px;
+  box-shadow: 0 0 40px rgba(242,184,75,0.3);
+  opacity: 0; pointer-events: none;
+  transition: none;
+}
+.lvl-banner.show {
+  animation: banner-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards, banner-out 0.4s ease 2.5s forwards;
+}
+@keyframes banner-in {
+  from { opacity:0; transform: translateX(-50%) translateY(-20px) scale(0.9); }
+  to   { opacity:1; transform: translateX(-50%) translateY(0) scale(1); }
+}
+@keyframes banner-out {
+  from { opacity:1; }
+  to   { opacity:0; transform: translateX(-50%) translateY(-12px); }
+}
+.lvl-banner-icon { font-size: 26px; }
+.lvl-banner-text strong { font-size: 15px; font-weight: 800; color: var(--gold); display: block; }
+.lvl-banner-text span { font-size: 12px; color: var(--text-dim); }
+</style>
+</head>
+<body>
+<!-- ============================================================
+     PAGE SHELL — data-tier driven by JS
+     ============================================================ -->
+<div class="page" id="page" data-tier="0">
+  <div class="page-inner">
+
+    <!-- TOP BAR -->
+    <header class="hero-bar">
+      <div class="hero-bar-left">
+        <div class="hero-avatar-mark">AS</div>
+        <div>
+          <div class="hero-name">Anshul Saini</div>
+          <div class="hero-handle">Full-Stack · AI Engineer · Letbex</div>
+        </div>
+      </div>
+      <div class="hero-bar-right">
+        <div class="level-pill">
+          <div class="lv-icon" id="lvIcon">🌱</div>
+          <div class="lv-num" id="lvNum">LV 1</div>
+          <div class="lv-title" id="lvTitle">Bootcamp Grad</div>
+        </div>
+        <div class="streak-pill">🔥 <span id="streakVal">0</span>d</div>
+      </div>
+    </header>
+
+    <!-- MAIN GRID -->
+    <div class="hero-main">
+
+      <!-- ── CHARACTER PANEL (SVG injected by Part 2) ── -->
+      <div class="char-panel" id="charPanel">
+        <div class="char-spotlight"></div>
+        <div class="char-svg-wrap">
+          <!-- SVG inserted here by Part 2 -->
+          <div id="charSvgMount"></div>
+        </div>
+        <div class="char-nameplate">
+          <div class="char-name-stack">
+            <div class="char-display-name">Anshul Saini</div>
+            <div class="char-tier-title" id="charTierTitle">Fresh Graduate</div>
+          </div>
+          <div class="char-lv-badge" id="charLvBadge">LV 1 / 11</div>
+        </div>
+      </div>
+
+      <!-- ── STATS PANEL ── -->
+      <div class="stats-panel">
+
+        <!-- XP Block -->
+        <div class="xp-block">
+          <div class="xp-row">
+            <div>
+              <div class="xp-label">Experience Points</div>
+              <div class="xp-earned" id="xpEarned">0</div>
+            </div>
+            <div class="xp-total" id="xpTotal">/ 3070 XP</div>
+          </div>
+          <div class="xp-track">
+            <div class="xp-fill" id="xpFill"></div>
+          </div>
+          <div class="xp-lvl-row">
+            <span id="xpLvLabel">LV 1 — Bootcamp Grad</span>
+            <span id="xpToNext">150 XP to next level</span>
+          </div>
+        </div>
+
+        <!-- Stat Grid -->
+        <div class="stat-grid">
+          <div class="stat-card stat-dsa">
+            <div class="stat-icon">🧩</div>
+            <div class="stat-value" id="dsaVal">0 <em>/ 99</em></div>
+            <div class="stat-label">DSA Problems</div>
+            <div class="stat-bar"><div class="stat-bar-fill" id="dsaBar" style="width:0%"></div></div>
+          </div>
+          <div class="stat-card stat-ai">
+            <div class="stat-icon">🤖</div>
+            <div class="stat-value" id="aiVal">0 <em>/ 47</em></div>
+            <div class="stat-label">AI Tasks</div>
+            <div class="stat-bar"><div class="stat-bar-fill" id="aiBar" style="width:0%"></div></div>
+          </div>
+          <div class="stat-card stat-lb">
+            <div class="stat-icon">📣</div>
+            <div class="stat-value" id="lbVal">0 <em>/ 24</em></div>
+            <div class="stat-label">Letbex Tasks</div>
+            <div class="stat-bar"><div class="stat-bar-fill" id="lbBar" style="width:0%"></div></div>
+          </div>
+          <div class="stat-card stat-pct">
+            <div class="stat-icon">📈</div>
+            <div class="stat-value" id="pctVal">0<em>%</em></div>
+            <div class="stat-label">Overall</div>
+            <div class="stat-bar"><div class="stat-bar-fill" id="pctBar" style="width:0%"></div></div>
+          </div>
+        </div>
+
+        <!-- Skills -->
+        <div class="skills-row">
+          <div class="skills-title">Core Stack</div>
+          <div class="skills-chips">
+            <span class="skill-chip sk-ts">TypeScript</span>
+            <span class="skill-chip sk-react">React</span>
+            <span class="skill-chip sk-next">Next.js</span>
+            <span class="skill-chip sk-node">Node</span>
+            <span class="skill-chip sk-pg">PostgreSQL</span>
+            <span class="skill-chip sk-ai">Agentic AI</span>
+            <span class="skill-chip sk-docker">Docker</span>
+          </div>
+        </div>
+
+        <!-- Next Unlock -->
+        <div class="next-unlock">
+          <div class="unlock-icon" id="unlockIcon">🔒</div>
+          <div class="unlock-body">
+            <div class="unlock-label">Next Milestone</div>
+            <div class="unlock-title" id="unlockTitle">Solve 25 DSA problems</div>
+            <div class="unlock-sub" id="unlockSub">Unlocks: Array Slinger title</div>
+          </div>
+          <div class="unlock-xp" id="unlockXP">+150 XP</div>
+        </div>
+
+      </div><!-- /stats-panel -->
+    </div><!-- /hero-main -->
+
+    <!-- MISSION BAR -->
+    <div class="mission-bar">
+      <div class="mission-label">Active Quest</div>
+      <div class="mission-text" id="missionText">Complete Week 1 — Arrays & Hashing. Focus on mastering hashmaps for O(1) lookups before moving to Two Pointers.</div>
+      <div class="mission-wk" id="missionWk">W1</div>
+    </div>
+
+  </div><!-- /page-inner -->
+</div><!-- /page -->
+
+<!-- Level-up effects -->
+<div class="levelup-flash" id="lvlFlash"></div>
+<div class="lvl-banner" id="lvlBanner">
+  <div class="lvl-banner-icon">⭐</div>
+  <div class="lvl-banner-text">
+    <strong id="lvlBannerTitle">Level Up!</strong>
+    <span id="lvlBannerSub">You reached Array Slinger</span>
+  </div>
+</div>
+
+<!-- Part 2 and Part 3 scripts will be appended here -->
+
+<script>
+/* ============================================================
+   PART 2 OF 3 — CHARACTER SVG
+   All 6 tiers: outfits, accessories, weapons.
+   Exposes window.mountCharacter(tier 0-5).
+   ============================================================ */
+
+/* ── BASE: always rendered (head, face, hair, neck, hands) ─ */
+const CHAR_BASE = `
+  <!-- Neck -->
+  <rect x="108" y="118" width="14" height="18" fill="#C8814A"/>
+
+  <!-- Head skin -->
+  <ellipse cx="115" cy="80" rx="38" ry="42" fill="#C8814A"/>
+
+  <!-- Ears (behind hair on sides) -->
+  <ellipse cx="77" cy="84" rx="11" ry="14" fill="#C8814A"/>
+  <ellipse cx="153" cy="84" rx="11" ry="14" fill="#C8814A"/>
+  <ellipse cx="77" cy="84" rx="7" ry="9" fill="#A06030" opacity="0.3"/>
+  <ellipse cx="153" cy="84" rx="7" ry="9" fill="#A06030" opacity="0.3"/>
+
+  <!-- Hair (dark, short, covers crown) -->
+  <path d="M77 68 Q78 34 115 31 Q152 34 153 68 L150 72 Q135 50 115 49 Q95 50 80 72 Z" fill="#1A0A00"/>
+  <path d="M77 68 L77 86 Q79 95 83 92 L83 75 Z" fill="#1A0A00"/>
+  <path d="M153 68 L153 86 Q151 95 147 92 L147 75 Z" fill="#1A0A00"/>
+  <path d="M96 36 Q115 30 134 36" stroke="#2C1200" stroke-width="1" fill="none" opacity="0.4"/>
+
+  <!-- Face skin on top of hair edges -->
+  <ellipse cx="115" cy="84" rx="34" ry="38" fill="#C8814A"/>
+
+  <!-- Eye whites -->
+  <ellipse cx="101" cy="83" rx="10" ry="8.5" fill="white"/>
+  <ellipse cx="129" cy="83" rx="10" ry="8.5" fill="white"/>
+  <!-- Irises -->
+  <circle cx="101" cy="83" r="7" fill="#2C1810"/>
+  <circle cx="129" cy="83" r="7" fill="#2C1810"/>
+  <!-- Pupils -->
+  <circle cx="101" cy="83" r="4" fill="#080300"/>
+  <circle cx="129" cy="83" r="4" fill="#080300"/>
+  <!-- Catchlights -->
+  <circle cx="104" cy="80" r="2.5" fill="white"/>
+  <circle cx="132" cy="80" r="2.5" fill="white"/>
+  <circle cx="103" cy="81.5" r="1.1" fill="rgba(255,255,255,0.8)"/>
+  <circle cx="131" cy="81.5" r="1.1" fill="rgba(255,255,255,0.8)"/>
+  <!-- Upper lash line -->
+  <path d="M91 79 Q101 74 111 79" stroke="#1A0A00" stroke-width="1.8" fill="none"/>
+  <path d="M119 79 Q129 74 139 79" stroke="#1A0A00" stroke-width="1.8" fill="none"/>
+
+  <!-- Eyebrows (bold, slightly angled = determined) -->
+  <path d="M88 71 Q101 65 114 70" stroke="#1A0A00" stroke-width="3.8" fill="none" stroke-linecap="round"/>
+  <path d="M116 70 Q129 65 142 71" stroke="#1A0A00" stroke-width="3.8" fill="none" stroke-linecap="round"/>
+
+  <!-- Nose (minimal, just shadow) -->
+  <ellipse cx="115" cy="93" rx="5" ry="3" fill="#9B5E28" opacity="0.25"/>
+  <path d="M111 91 Q109 97 112 98 Q115 100 118 98 Q121 97 119 91" stroke="#9B5E28" stroke-width="1" fill="rgba(155,94,40,0.12)"/>
+
+  <!-- Mouth (confident slight smile) -->
+  <path d="M106 105 Q115 113 124 105" stroke="#8B4513" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <path d="M109 108 Q115 111 121 108" fill="rgba(180,80,40,0.18)" stroke="rgba(180,80,40,0.25)" stroke-width="0.8"/>
+
+  <!-- Hands (float over sleeves) -->
+  <ellipse cx="55" cy="208" rx="13" ry="12" fill="#C8814A"/>
+  <ellipse cx="55" cy="208" rx="9" ry="8" fill="#D48850" opacity="0.32"/>
+  <ellipse cx="175" cy="208" rx="13" ry="12" fill="#C8814A"/>
+  <ellipse cx="175" cy="208" rx="9" ry="8" fill="#D48850" opacity="0.32"/>
+`;
+
+/* ============================================================
+   TIER DEFINITIONS
+   Each tier: { back, body, headFx, weapon }
+   ============================================================ */
+const TIERS = [
+
+/* ── TIER 0 — Fresh Grad ───────────────────────────────── */
+{
+  back: ``,
+  headFx: ``,
+  body: `
+    <!-- GRAY T-SHIRT body -->
+    <path d="M82 130 L82 238 L148 238 L148 130 Q135 124 115 122 Q95 124 82 130 Z" fill="#6B7280"/>
+    <path d="M107 127 L115 144 L123 127" fill="#575F6C"/>
+    <line x1="89" y1="136" x2="89" y2="234" stroke="#7A828F" stroke-width="1" opacity="0.35"/>
+    <!-- Left sleeve -->
+    <path d="M82 130 L50 140 L44 204 L64 204 L82 168 Z" fill="#6B7280"/>
+    <!-- Right sleeve -->
+    <path d="M148 130 L180 140 L186 204 L166 204 L148 168 Z" fill="#6B7280"/>
+    <!-- Sleeve seams -->
+    <line x1="50" y1="140" x2="44" y2="204" stroke="#575F6C" stroke-width="0.8" opacity="0.45"/>
+    <line x1="180" y1="140" x2="186" y2="204" stroke="#575F6C" stroke-width="0.8" opacity="0.45"/>
+    <!-- BLUE JEANS -->
+    <rect x="82" y="238" width="30" height="115" rx="3" fill="#1E3A5F"/>
+    <rect x="118" y="238" width="30" height="115" rx="3" fill="#1E3A5F"/>
+    <rect x="81" y="234" width="68" height="8" rx="1" fill="#152B47"/>
+    <line x1="115" y1="242" x2="115" y2="353" stroke="#152B47" stroke-width="2"/>
+    <path d="M84 250 Q92 258 100 250" stroke="#152B47" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    <!-- WHITE SNEAKERS -->
+    <ellipse cx="97" cy="361" rx="24" ry="12" fill="#E8E8E8"/>
+    <ellipse cx="133" cy="361" rx="24" ry="12" fill="#E8E8E8"/>
+    <ellipse cx="97" cy="364" rx="24" ry="8" fill="#CECECE"/>
+    <ellipse cx="133" cy="364" rx="24" ry="8" fill="#CECECE"/>
+    <ellipse cx="97" cy="357" rx="20" ry="8" fill="#F5F5F5"/>
+    <ellipse cx="133" cy="357" rx="20" ry="8" fill="#F5F5F5"/>
+    <path d="M76 360 Q97 352 118 360" stroke="#CC2200" stroke-width="1.8" fill="none" stroke-linecap="round" opacity="0.75"/>
+    <path d="M112 360 Q133 352 154 360" stroke="#CC2200" stroke-width="1.8" fill="none" stroke-linecap="round" opacity="0.75"/>
+  `,
+  weapon: `
+    <!-- SHOULDER BAG -->
+    <path d="M148 148 Q185 155 188 192" stroke="#9CA3AF" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+    <rect x="179" y="192" width="46" height="34" rx="7" fill="#4B5563"/>
+    <rect x="179" y="192" width="46" height="16" rx="7" fill="#374151"/>
+    <rect x="179" y="200" width="46" height="4" fill="#374151"/>
+    <rect x="183" y="208" width="38" height="15" rx="3" fill="#2D3748"/>
+    <rect x="195" y="188" width="12" height="5" rx="2" fill="#6B7280"/>
+    <rect x="197" y="187" width="8" height="7" rx="1" fill="#9CA3AF"/>
+    <rect x="197" y="192" width="8" height="3" fill="#6B7280"/>
+    <rect x="182" y="193" width="42" height="31" rx="6" fill="none" stroke="#6B7280" stroke-width="0.8" stroke-dasharray="3,3" opacity="0.4"/>
+    <ellipse cx="202" cy="228" rx="22" ry="5" fill="#1F2937" opacity="0.25"/>
+  `
+},
+
+/* ── TIER 1 — Array Slinger ────────────────────────────── */
+{
+  back: ``,
+  headFx: ``,
+  body: `
+    <!-- NAVY HOODIE body -->
+    <path d="M80 130 L80 240 L150 240 L150 130 Q135 123 115 121 Q95 123 80 130 Z" fill="#1E3A5F"/>
+    <path d="M85 128 Q115 118 145 128 L145 122 Q115 110 85 122 Z" fill="#172D4A"/>
+    <!-- Zipper -->
+    <rect x="113" y="130" width="4" height="68" rx="2" fill="#2D4F7C"/>
+    <line x1="113" y1="140" x2="117" y2="140" stroke="#3B6090" stroke-width="0.8"/>
+    <line x1="113" y1="152" x2="117" y2="152" stroke="#3B6090" stroke-width="0.8"/>
+    <line x1="113" y1="164" x2="117" y2="164" stroke="#3B6090" stroke-width="0.8"/>
+    <line x1="113" y1="176" x2="117" y2="176" stroke="#3B6090" stroke-width="0.8"/>
+    <line x1="113" y1="188" x2="117" y2="188" stroke="#3B6090" stroke-width="0.8"/>
+    <!-- Kangaroo pocket -->
+    <rect x="93" y="198" width="44" height="30" rx="8" fill="#172D4A"/>
+    <rect x="95" y="200" width="40" height="26" rx="6" fill="#1A3258"/>
+    <line x1="115" y1="200" x2="115" y2="226" stroke="#172D4A" stroke-width="1.5"/>
+    <!-- Left sleeve -->
+    <path d="M80 130 L48 140 L42 204 L62 204 L80 168 Z" fill="#1E3A5F"/>
+    <!-- Right sleeve -->
+    <path d="M150 130 L182 140 L188 204 L168 204 L150 168 Z" fill="#1E3A5F"/>
+    <!-- Cuff bands -->
+    <rect x="42" y="200" width="20" height="6" rx="3" fill="#152B47"/>
+    <rect x="168" y="200" width="20" height="6" rx="3" fill="#152B47"/>
+    <!-- BLACK JEANS -->
+    <rect x="80" y="240" width="32" height="113" rx="3" fill="#1a1a2e"/>
+    <rect x="118" y="240" width="32" height="113" rx="3" fill="#1a1a2e"/>
+    <rect x="79" y="236" width="72" height="8" rx="1" fill="#111125"/>
+    <line x1="115" y1="244" x2="115" y2="353" stroke="#111125" stroke-width="2"/>
+    <!-- DARK SNEAKERS blue stripe -->
+    <ellipse cx="96" cy="362" rx="24" ry="12" fill="#252535"/>
+    <ellipse cx="134" cy="362" rx="24" ry="12" fill="#252535"/>
+    <ellipse cx="96" cy="364" rx="24" ry="8" fill="#1E1E2E"/>
+    <ellipse cx="134" cy="364" rx="24" ry="8" fill="#1E1E2E"/>
+    <ellipse cx="96" cy="358" rx="20" ry="8" fill="#2E2E42"/>
+    <ellipse cx="134" cy="358" rx="20" ry="8" fill="#2E2E42"/>
+    <path d="M74 360 Q96 352 118 360" stroke="#60A5FA" stroke-width="1.8" fill="none" stroke-linecap="round" opacity="0.9"/>
+    <path d="M112 360 Q134 352 156 360" stroke="#60A5FA" stroke-width="1.8" fill="none" stroke-linecap="round" opacity="0.9"/>
+  `,
+  weapon: `
+    <!-- FLOATING KEYBOARD -->
+    <rect x="172" y="174" width="90" height="38" rx="7" fill="#1E3A5F"/>
+    <rect x="175" y="177" width="84" height="32" rx="5" fill="#172D4A"/>
+    <!-- Key row 1 -->
+    <rect x="178" y="180" width="9" height="7" rx="2" fill="#2D4F7C"/><rect x="189" y="180" width="9" height="7" rx="2" fill="#2D4F7C"/>
+    <rect x="200" y="180" width="9" height="7" rx="2" fill="#2D4F7C"/><rect x="211" y="180" width="9" height="7" rx="2" fill="#2D4F7C"/>
+    <rect x="222" y="180" width="9" height="7" rx="2" fill="#2D4F7C"/><rect x="233" y="180" width="9" height="7" rx="2" fill="#2D4F7C"/>
+    <rect x="244" y="180" width="9" height="7" rx="2" fill="#60A5FA" opacity="0.9"/>
+    <!-- Key row 2 -->
+    <rect x="178" y="190" width="13" height="7" rx="2" fill="#2D4F7C"/>
+    <rect x="193" y="190" width="9" height="7" rx="2" fill="#60A5FA" opacity="0.7"/>
+    <rect x="204" y="190" width="9" height="7" rx="2" fill="#2D4F7C"/><rect x="215" y="190" width="9" height="7" rx="2" fill="#2D4F7C"/>
+    <rect x="226" y="190" width="9" height="7" rx="2" fill="#2D4F7C"/><rect x="237" y="190" width="9" height="7" rx="2" fill="#2D4F7C"/>
+    <rect x="248" y="190" width="11" height="7" rx="2" fill="#2D4F7C"/>
+    <!-- Spacebar row -->
+    <rect x="178" y="200" width="11" height="7" rx="2" fill="#2D4F7C"/>
+    <rect x="191" y="200" width="55" height="7" rx="3" fill="#3B5F8C"/>
+    <rect x="248" y="200" width="11" height="7" rx="2" fill="#2D4F7C"/>
+    <!-- LED indicator -->
+    <circle cx="254" cy="165" r="3.5" fill="#60A5FA"/>
+    <circle cx="254" cy="165" r="6" fill="#60A5FA" opacity="0.2"/>
+    <path d="M249 163 Q252 158 255 160 Q258 155 261 158" stroke="#60A5FA" stroke-width="1.2" fill="none" opacity="0.65"/>
+    <ellipse cx="217" cy="216" rx="44" ry="6" fill="#172D4A" opacity="0.28"/>
+  `
+},
+
+/* ── TIER 2 — AI Builder ───────────────────────────────── */
+{
+  back: ``,
+  headFx: ``,
+  body: `
+    <!-- PURPLE HOODIE body -->
+    <path d="M80 130 L80 240 L150 240 L150 130 Q135 123 115 121 Q95 123 80 130 Z" fill="#6D28D9"/>
+    <path d="M85 128 Q115 118 145 128 L145 122 Q115 110 85 122 Z" fill="#5B21B6"/>
+    <!-- Zipper -->
+    <rect x="113" y="130" width="4" height="68" rx="2" fill="#5B21B6"/>
+    <!-- Kangaroo pocket with AI label -->
+    <rect x="93" y="198" width="44" height="30" rx="8" fill="#5B21B6"/>
+    <rect x="95" y="200" width="40" height="26" rx="6" fill="#6226C0"/>
+    <text x="115" y="218" text-anchor="middle" font-size="11" font-weight="800" fill="#C4B5FD" font-family="monospace">AI</text>
+    <!-- Sleeves -->
+    <path d="M80 130 L48 140 L42 204 L62 204 L80 168 Z" fill="#6D28D9"/>
+    <path d="M150 130 L182 140 L188 204 L168 204 L150 168 Z" fill="#6D28D9"/>
+    <rect x="42" y="200" width="20" height="6" rx="3" fill="#4C1D95"/>
+    <rect x="168" y="200" width="20" height="6" rx="3" fill="#4C1D95"/>
+    <line x1="78" y1="135" x2="78" y2="238" stroke="#5B21B6" stroke-width="2" opacity="0.4"/>
+    <line x1="152" y1="135" x2="152" y2="238" stroke="#5B21B6" stroke-width="2" opacity="0.4"/>
+    <!-- Floating code particles -->
+    <text x="44" y="154" font-size="9" fill="#A78BFA" font-family="monospace" opacity="0.75">const</text>
+    <text x="165" y="149" font-size="9" fill="#45D6C4" font-family="monospace" opacity="0.75">async</text>
+    <text x="40" y="190" font-size="9" fill="#5EE6A0" font-family="monospace" opacity="0.65">()=></text>
+    <text x="169" y="184" font-size="9" fill="#A78BFA" font-family="monospace" opacity="0.65">{}</text>
+    <text x="48" y="224" font-size="8" fill="#45D6C4" font-family="monospace" opacity="0.5">true</text>
+    <!-- BLACK JEANS -->
+    <rect x="80" y="240" width="32" height="113" rx="3" fill="#0D0D1A"/>
+    <rect x="118" y="240" width="32" height="113" rx="3" fill="#0D0D1A"/>
+    <rect x="79" y="236" width="72" height="8" rx="1" fill="#080810"/>
+    <line x1="115" y1="244" x2="115" y2="353" stroke="#080810" stroke-width="2"/>
+    <!-- PURPLE TINTED SHOES -->
+    <ellipse cx="96" cy="362" rx="24" ry="12" fill="#1A0D2E"/>
+    <ellipse cx="134" cy="362" rx="24" ry="12" fill="#1A0D2E"/>
+    <ellipse cx="96" cy="364" rx="24" ry="8" fill="#130828"/>
+    <ellipse cx="134" cy="364" rx="24" ry="8" fill="#130828"/>
+    <ellipse cx="96" cy="358" rx="20" ry="8" fill="#221540"/>
+    <ellipse cx="134" cy="358" rx="20" ry="8" fill="#221540"/>
+    <path d="M74 360 Q96 352 118 360" stroke="#A78BFA" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M112 360 Q134 352 156 360" stroke="#A78BFA" stroke-width="2" fill="none" stroke-linecap="round"/>
+  `,
+  weapon: `
+    <!-- GLOWING LAPTOP -->
+    <rect x="168" y="150" width="95" height="68" rx="6" fill="#1A0D2E"/>
+    <rect x="171" y="153" width="89" height="62" rx="4" fill="#0D0820"/>
+    <rect x="173" y="155" width="85" height="58" rx="3" fill="#080412"/>
+    <!-- Code lines (color syntax) -->
+    <rect x="176" y="160" width="36" height="2" rx="1" fill="#A78BFA" opacity="0.9"/>
+    <rect x="176" y="166" width="54" height="2" rx="1" fill="#45D6C4" opacity="0.9"/>
+    <rect x="176" y="172" width="46" height="2" rx="1" fill="#5EE6A0" opacity="0.8"/>
+    <rect x="176" y="178" width="30" height="2" rx="1" fill="#F2B84B" opacity="0.85"/>
+    <rect x="176" y="184" width="58" height="2" rx="1" fill="#A78BFA" opacity="0.9"/>
+    <rect x="176" y="190" width="42" height="2" rx="1" fill="#45D6C4" opacity="0.8"/>
+    <rect x="176" y="196" width="50" height="2" rx="1" fill="#5EE6A0" opacity="0.7"/>
+    <!-- Blinking cursor -->
+    <rect x="232" y="193" width="3" height="7" rx="1" fill="#A78BFA" opacity="0.9"/>
+    <!-- Screen glow edge -->
+    <rect x="171" y="153" width="89" height="62" rx="4" fill="none" stroke="#A78BFA" stroke-width="1" opacity="0.4"/>
+    <!-- Hinge + base -->
+    <rect x="168" y="217" width="95" height="4" rx="2" fill="#1A0D2E"/>
+    <rect x="162" y="219" width="107" height="12" rx="5" fill="#1A0D2E"/>
+    <rect x="198" y="222" width="32" height="6" rx="2" fill="#221540"/>
+    <!-- Glow puddle under -->
+    <ellipse cx="215" cy="234" rx="50" ry="6" fill="#A78BFA" opacity="0.10"/>
+    <ellipse cx="215" cy="218" rx="44" ry="5" fill="#A78BFA" opacity="0.10"/>
+  `
+},
+
+/* ── TIER 3 — Agent Architect ──────────────────────────── */
+{
+  back: ``,
+  headFx: ``,
+  body: `
+    <!-- BLACK TECH JACKET body -->
+    <path d="M78 128 L78 240 L152 240 L152 128 Q136 121 115 119 Q94 121 78 128 Z" fill="#111827"/>
+    <rect x="107" y="120" width="16" height="10" rx="3" fill="#0D1117"/>
+    <!-- Lapels -->
+    <path d="M97 124 L115 148 L133 124" fill="#0D1117" stroke="#1F2937" stroke-width="1.5"/>
+    <!-- Teal border trim (signature) -->
+    <line x1="97" y1="124" x2="78" y2="156" stroke="#45D6C4" stroke-width="1.5" opacity="0.9"/>
+    <line x1="78" y1="156" x2="78" y2="240" stroke="#45D6C4" stroke-width="1.5" opacity="0.9"/>
+    <line x1="133" y1="124" x2="152" y2="156" stroke="#45D6C4" stroke-width="1.5" opacity="0.9"/>
+    <line x1="152" y1="156" x2="152" y2="240" stroke="#45D6C4" stroke-width="1.5" opacity="0.9"/>
+    <!-- Chest pocket -->
+    <rect x="120" y="148" width="28" height="22" rx="3" fill="#1F2937"/>
+    <rect x="122" y="150" width="24" height="18" rx="2" fill="#172030"/>
+    <rect x="122" y="150" width="24" height="2" fill="#45D6C4" opacity="0.9"/>
+    <!-- Circuit traces on chest -->
+    <path d="M84 180 L96 180 L96 194 L110 194" stroke="#45D6C4" stroke-width="0.9" fill="none" opacity="0.55"/>
+    <circle cx="96" cy="180" r="2" fill="#45D6C4" opacity="0.6"/>
+    <circle cx="110" cy="194" r="2" fill="#45D6C4" opacity="0.6"/>
+    <path d="M122 168 L132 168 L132 178" stroke="#A78BFA" stroke-width="0.9" fill="none" opacity="0.5"/>
+    <circle cx="132" cy="178" r="2" fill="#A78BFA" opacity="0.55"/>
+    <!-- Sleeves -->
+    <path d="M78 128 L46 140 L40 204 L60 204 L78 166 Z" fill="#111827"/>
+    <path d="M152 128 L184 140 L190 204 L170 204 L152 166 Z" fill="#111827"/>
+    <!-- Teal cuff accent -->
+    <rect x="40" y="200" width="20" height="6" rx="3" fill="#0D1117" stroke="#45D6C4" stroke-width="1"/>
+    <rect x="40" y="200" width="20" height="2" fill="#45D6C4" opacity="0.8"/>
+    <rect x="170" y="200" width="20" height="6" rx="3" fill="#0D1117" stroke="#45D6C4" stroke-width="1"/>
+    <rect x="170" y="200" width="20" height="2" fill="#45D6C4" opacity="0.8"/>
+    <!-- Floating tech glyphs -->
+    <text x="46" y="150" font-size="9" fill="#45D6C4" font-family="monospace" opacity="0.7">TS</text>
+    <text x="163" y="145" font-size="9" fill="#A78BFA" font-family="monospace" opacity="0.7">AI</text>
+    <text x="44" y="190" font-size="9" fill="#5EE6A0" font-family="monospace" opacity="0.55">fn</text>
+    <text x="168" y="184" font-size="9" fill="#45D6C4" font-family="monospace" opacity="0.55">[]</text>
+    <!-- DARK TACTICAL PANTS -->
+    <rect x="78" y="240" width="34" height="113" rx="3" fill="#0D111A"/>
+    <rect x="118" y="240" width="34" height="113" rx="3" fill="#0D111A"/>
+    <rect x="77" y="236" width="76" height="8" rx="1" fill="#080B12"/>
+    <line x1="115" y1="244" x2="115" y2="353" stroke="#080B12" stroke-width="2"/>
+    <!-- Cargo pocket -->
+    <rect x="83" y="280" width="24" height="24" rx="3" fill="#111827" stroke="#1F2937" stroke-width="0.8"/>
+    <!-- Side teal stripe -->
+    <line x1="78" y1="240" x2="78" y2="353" stroke="#45D6C4" stroke-width="1" opacity="0.4"/>
+    <line x1="152" y1="240" x2="152" y2="353" stroke="#45D6C4" stroke-width="1" opacity="0.4"/>
+    <!-- BOOTS with teal glow -->
+    <ellipse cx="95" cy="362" rx="24" ry="13" fill="#0D0D0D"/>
+    <ellipse cx="135" cy="362" rx="24" ry="13" fill="#0D0D0D"/>
+    <ellipse cx="95" cy="364" rx="24" ry="9" fill="#0A0A0A"/>
+    <ellipse cx="135" cy="364" rx="24" ry="9" fill="#0A0A0A"/>
+    <ellipse cx="95" cy="358" rx="20" ry="9" fill="#111111"/>
+    <ellipse cx="135" cy="358" rx="20" ry="9" fill="#111111"/>
+    <path d="M72 360 Q95 352 118 360" stroke="#45D6C4" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M112 360 Q135 352 158 360" stroke="#45D6C4" stroke-width="2" fill="none" stroke-linecap="round"/>
+  `,
+  weapon: `
+    <!-- CIRCUIT BOARD -->
+    <rect x="174" y="155" width="84" height="64" rx="8" fill="#0D1117"/>
+    <rect x="178" y="159" width="76" height="56" rx="5" fill="#111827"/>
+    <rect x="178" y="159" width="76" height="56" rx="5" fill="#0D2010" opacity="0.45"/>
+    <!-- Traces -->
+    <path d="M182 173 L220 173 L220 187 L240 187" stroke="#45D6C4" stroke-width="1.8" fill="none"/>
+    <path d="M182 187 L196 187 L196 201 L240 201" stroke="#A78BFA" stroke-width="1.8" fill="none"/>
+    <path d="M182 196 L204 196" stroke="#45D6C4" stroke-width="1.2" fill="none" opacity="0.7"/>
+    <!-- Nodes -->
+    <circle cx="220" cy="173" r="4" fill="#45D6C4"/>
+    <circle cx="220" cy="187" r="4" fill="#45D6C4"/>
+    <circle cx="196" cy="187" r="4" fill="#A78BFA"/>
+    <circle cx="196" cy="201" r="4" fill="#A78BFA"/>
+    <!-- Node glow -->
+    <circle cx="220" cy="173" r="7" fill="#45D6C4" opacity="0.18"/>
+    <circle cx="196" cy="201" r="7" fill="#A78BFA" opacity="0.18"/>
+    <!-- SMD components -->
+    <rect x="228" y="168" width="9" height="6" rx="1" fill="#1F2937"/>
+    <rect x="229" y="169" width="7" height="4" fill="#45D6C4" opacity="0.7"/>
+    <rect x="228" y="194" width="9" height="6" rx="1" fill="#1F2937"/>
+    <rect x="229" y="195" width="7" height="4" fill="#A78BFA" opacity="0.7"/>
+    <!-- IC chip -->
+    <rect x="183" y="207" width="15" height="6" rx="1" fill="#1F2937"/>
+    <rect x="184" y="208" width="13" height="4" fill="#2D4F7C" opacity="0.8"/>
+    <!-- Board glow border -->
+    <rect x="174" y="155" width="84" height="64" rx="8" fill="none" stroke="#45D6C4" stroke-width="1.5" opacity="0.55"/>
+    <ellipse cx="216" cy="224" rx="42" ry="6" fill="#45D6C4" opacity="0.09"/>
+  `
+},
+
+/* ── TIER 4 — Hacker Elite ─────────────────────────────── */
+{
+  back: ``,
+  headFx: ``,
+  body: `
+    <!-- JET BLACK TACTICAL SUIT -->
+    <path d="M76 128 L76 242 L154 242 L154 128 Q136 120 115 118 Q94 120 76 128 Z" fill="#080B12"/>
+    <path d="M95 124 L115 150 L135 124" fill="#0A0E16" stroke="#1E2638" stroke-width="1.5"/>
+    <rect x="107" y="120" width="16" height="10" rx="2" fill="#0A0E16"/>
+    <!-- Teal glow trim (the iconic element) -->
+    <path d="M95 124 L76 152 L76 242" stroke="#45D6C4" stroke-width="2" fill="none" opacity="0.9"/>
+    <path d="M135 124 L154 152 L154 242" stroke="#45D6C4" stroke-width="2" fill="none" opacity="0.9"/>
+    <!-- Horizontal lines -->
+    <line x1="76" y1="174" x2="154" y2="174" stroke="#45D6C4" stroke-width="0.8" opacity="0.28"/>
+    <line x1="76" y1="204" x2="154" y2="204" stroke="#45D6C4" stroke-width="0.8" opacity="0.28"/>
+    <!-- Hex pattern chest -->
+    <path d="M88 158 L98 152 L108 158 L108 170 L98 176 L88 170 Z" stroke="#45D6C4" stroke-width="0.8" fill="none" opacity="0.4"/>
+    <path d="M108 158 L118 152 L128 158 L128 170 L118 176 L108 170 Z" stroke="#45D6C4" stroke-width="0.8" fill="none" opacity="0.4"/>
+    <!-- Tech spine center -->
+    <rect x="112" y="150" width="6" height="56" rx="2" fill="#0D1520" stroke="#45D6C4" stroke-width="0.6" opacity="0.6"/>
+    <circle cx="115" cy="163" r="3.5" fill="#45D6C4" opacity="0.9"/>
+    <circle cx="115" cy="177" r="2.5" fill="#A78BFA" opacity="0.9"/>
+    <circle cx="115" cy="189" r="2.5" fill="#45D6C4" opacity="0.7"/>
+    <!-- Sleeves -->
+    <path d="M76 128 L44 140 L38 205 L58 205 L76 166 Z" fill="#080B12"/>
+    <path d="M154 128 L186 140 L192 205 L172 205 L154 166 Z" fill="#080B12"/>
+    <!-- Sleeve glow stripe -->
+    <line x1="60" y1="142" x2="48" y2="203" stroke="#45D6C4" stroke-width="1.2" opacity="0.75"/>
+    <line x1="170" y1="142" x2="182" y2="203" stroke="#45D6C4" stroke-width="1.2" opacity="0.75"/>
+    <!-- Cuff glow bands (solid teal) -->
+    <rect x="38" y="201" width="20" height="6" rx="3" fill="#45D6C4" opacity="0.65"/>
+    <rect x="172" y="201" width="20" height="6" rx="3" fill="#45D6C4" opacity="0.65"/>
+    <!-- Floating code glyphs -->
+    <text x="42" y="153" font-size="9" fill="#45D6C4" font-family="monospace" opacity="0.8">&lt;/&gt;</text>
+    <text x="164" y="149" font-size="9" fill="#A78BFA" font-family="monospace" opacity="0.8">0x</text>
+    <text x="40" y="192" font-size="9" fill="#5EE6A0" font-family="monospace" opacity="0.65">!!x</text>
+    <text x="168" y="188" font-size="9" fill="#45D6C4" font-family="monospace" opacity="0.65">**</text>
+    <text x="46" y="228" font-size="8" fill="#A78BFA" font-family="monospace" opacity="0.5">===</text>
+    <!-- JET BLACK PANTS WITH GLOW -->
+    <rect x="76" y="242" width="36" height="111" rx="3" fill="#050710"/>
+    <rect x="118" y="242" width="36" height="111" rx="3" fill="#050710"/>
+    <rect x="75" y="238" width="80" height="8" rx="1" fill="#030508"/>
+    <line x1="76" y1="242" x2="76" y2="353" stroke="#45D6C4" stroke-width="1.2" opacity="0.55"/>
+    <line x1="154" y1="242" x2="154" y2="353" stroke="#45D6C4" stroke-width="1.2" opacity="0.55"/>
+    <rect x="75" y="234" width="80" height="4" rx="2" fill="#45D6C4" opacity="0.38"/>
+    <rect x="110" y="234" width="10" height="4" rx="1" fill="#45D6C4" opacity="0.7"/>
+    <!-- ELITE BOOTS -->
+    <ellipse cx="94" cy="362" rx="25" ry="13" fill="#050505"/>
+    <ellipse cx="136" cy="362" rx="25" ry="13" fill="#050505"/>
+    <ellipse cx="94" cy="364" rx="25" ry="9" fill="#020202"/>
+    <ellipse cx="136" cy="364" rx="25" ry="9" fill="#020202"/>
+    <ellipse cx="94" cy="358" rx="21" ry="9" fill="#090910"/>
+    <ellipse cx="136" cy="358" rx="21" ry="9" fill="#090910"/>
+    <path d="M70 360 Q94 351 118 360" stroke="#45D6C4" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M112 360 Q136 351 160 360" stroke="#45D6C4" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  `,
+  weapon: `
+    <!-- HOLOGRAPHIC SWORD -->
+    <defs>
+      <linearGradient id="blade-grad" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#45D6C4"/>
+        <stop offset="100%" stop-color="#A78BFA"/>
+      </linearGradient>
+    </defs>
+    <!-- Pommel -->
+    <ellipse cx="205" cy="272" rx="7" ry="5" fill="#1a1a2e"/>
+    <!-- Handle -->
+    <rect x="201" y="250" width="8" height="24" rx="3" fill="#1a1a2e"/>
+    <line x1="201" y1="255" x2="209" y2="255" stroke="#2D2D4E" stroke-width="1.5"/>
+    <line x1="201" y1="262" x2="209" y2="262" stroke="#2D2D4E" stroke-width="1.5"/>
+    <line x1="201" y1="269" x2="209" y2="269" stroke="#2D2D4E" stroke-width="1.5"/>
+    <!-- Crossguard -->
+    <rect x="191" y="246" width="28" height="6" rx="2" fill="#252540"/>
+    <rect x="191" y="246" width="28" height="2" fill="#45D6C4" opacity="0.85"/>
+    <!-- Blade (holographic semi-transparent) -->
+    <polygon points="200,248 210,248 214,156 196,156" fill="url(#blade-grad)" opacity="0.22"/>
+    <!-- Blade edges glow -->
+    <line x1="200" y1="248" x2="196" y2="158" stroke="#45D6C4" stroke-width="2" opacity="0.95"/>
+    <line x1="210" y1="248" x2="214" y2="158" stroke="#A78BFA" stroke-width="2" opacity="0.95"/>
+    <!-- Center energy line -->
+    <line x1="205" y1="248" x2="205" y2="160" stroke="white" stroke-width="0.8" opacity="0.3"/>
+    <!-- Horizontal energy rings on blade -->
+    <line x1="198" y1="220" x2="212" y2="220" stroke="#45D6C4" stroke-width="0.8" opacity="0.5"/>
+    <line x1="197" y1="196" x2="213" y2="196" stroke="#A78BFA" stroke-width="0.8" opacity="0.5"/>
+    <line x1="198" y1="174" x2="212" y2="174" stroke="#45D6C4" stroke-width="0.8" opacity="0.38"/>
+    <!-- Blade tip glow -->
+    <ellipse cx="205" cy="152" rx="8" ry="12" fill="#45D6C4" opacity="0.32"/>
+    <ellipse cx="205" cy="150" rx="5" ry="8" fill="#45D6C4" opacity="0.55"/>
+    <ellipse cx="205" cy="148" rx="2" ry="4" fill="white" opacity="0.5"/>
+    <!-- Energy rune particles -->
+    <text x="219" y="186" font-size="7" fill="#45D6C4" opacity="0.65" font-family="monospace">01</text>
+    <text x="219" y="211" font-size="7" fill="#A78BFA" opacity="0.55" font-family="monospace">10</text>
+    <text x="184" y="198" font-size="7" fill="#5EE6A0" opacity="0.5" font-family="monospace">11</text>
+    <!-- Ground shadow -->
+    <ellipse cx="205" cy="278" rx="16" ry="4" fill="#45D6C4" opacity="0.1"/>
+  `
+},
+
+/* ── TIER 5 — Staff Engineer (LEGENDARY) ───────────────── */
+{
+  back: `
+    <!-- CAPE (rendered first, behind everything) -->
+    <path d="M88 128 Q58 210 62 342 Q80 362 86 342 Q84 210 88 130 Z" fill="#0D0520" opacity="0.92"/>
+    <path d="M142 128 Q172 210 168 342 Q150 362 144 342 Q146 210 142 130 Z" fill="#0D0520" opacity="0.92"/>
+    <path d="M88 136 Q64 218 68 338" stroke="#F2B84B" stroke-width="2" fill="none" opacity="0.6"/>
+    <path d="M142 136 Q166 218 162 338" stroke="#F2B84B" stroke-width="2" fill="none" opacity="0.6"/>
+    <path d="M88 150 Q66 232 70 334" stroke="#A78BFA" stroke-width="1" fill="none" opacity="0.28"/>
+    <path d="M142 150 Q164 232 160 334" stroke="#A78BFA" stroke-width="1" fill="none" opacity="0.28"/>
+  `,
+  headFx: `
+    <!-- LEGENDARY CROWN -->
+    <path d="M83 50 L90 33 L97 50 L104 33 L115 28 L126 33 L133 50 L140 33 L147 50" fill="none" stroke="#F2B84B" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+    <rect x="83" y="48" width="64" height="7" rx="2" fill="#1a0a00" stroke="#F2B84B" stroke-width="1.5"/>
+    <!-- Crown gems -->
+    <ellipse cx="115" cy="31" rx="7" ry="7" fill="#A78BFA"/>
+    <ellipse cx="115" cy="31" rx="4.5" ry="4.5" fill="#C4B5FD"/>
+    <ellipse cx="115" cy="31" rx="2" ry="2" fill="white" opacity="0.95"/>
+    <ellipse cx="115" cy="31" rx="10" ry="10" fill="#A78BFA" opacity="0.18"/>
+    <circle cx="97" cy="48" r="3.5" fill="#45D6C4"/>
+    <circle cx="133" cy="48" r="3.5" fill="#45D6C4"/>
+    <circle cx="90" cy="50" r="2" fill="#F2B84B"/>
+    <circle cx="140" cy="50" r="2" fill="#F2B84B"/>
+  `,
+  body: `
+    <!-- LEGENDARY DARK ARMOR body -->
+    <path d="M78 128 L78 242 L152 242 L152 128 Q135 120 115 117 Q95 120 78 128 Z" fill="#0A0A14"/>
+    <!-- Gold border trim -->
+    <path d="M96 123 L78 152 L78 242" stroke="#F2B84B" stroke-width="2" fill="none" opacity="0.9"/>
+    <path d="M134 123 L152 152 L152 242" stroke="#F2B84B" stroke-width="2" fill="none" opacity="0.9"/>
+    <!-- Chest armor plate -->
+    <path d="M96 130 L115 125 L134 130 L138 182 L115 190 L92 182 Z" fill="#0D0D1E" stroke="#F2B84B" stroke-width="1.5"/>
+    <!-- Power core gem -->
+    <ellipse cx="115" cy="156" rx="13" ry="13" fill="#1a0d2e"/>
+    <ellipse cx="115" cy="156" rx="10" ry="10" fill="#A78BFA"/>
+    <ellipse cx="115" cy="156" rx="6.5" ry="6.5" fill="#C4B5FD"/>
+    <ellipse cx="115" cy="156" rx="3" ry="3" fill="white" opacity="0.95"/>
+    <ellipse cx="115" cy="156" rx="17" ry="17" fill="#A78BFA" opacity="0.2"/>
+    <!-- Rune lines on plate -->
+    <path d="M100 140 Q115 135 130 140" stroke="#F2B84B" stroke-width="0.9" fill="none" opacity="0.5"/>
+    <path d="M98 170 Q115 177 132 170" stroke="#F2B84B" stroke-width="0.9" fill="none" opacity="0.5"/>
+    <!-- Shoulder pauldrons -->
+    <ellipse cx="76" cy="136" rx="20" ry="15" fill="#0A0A14" stroke="#F2B84B" stroke-width="1.5"/>
+    <ellipse cx="154" cy="136" rx="20" ry="15" fill="#0A0A14" stroke="#F2B84B" stroke-width="1.5"/>
+    <ellipse cx="76" cy="136" rx="14" ry="10" fill="#1a0d2e"/>
+    <ellipse cx="154" cy="136" rx="14" ry="10" fill="#1a0d2e"/>
+    <!-- Pauldron gold studs -->
+    <circle cx="70" cy="132" r="3.5" fill="#F2B84B"/>
+    <circle cx="82" cy="129" r="3.5" fill="#F2B84B"/>
+    <circle cx="148" cy="129" r="3.5" fill="#F2B84B"/>
+    <circle cx="160" cy="132" r="3.5" fill="#F2B84B"/>
+    <!-- Armor sleeves -->
+    <path d="M74 140 L44 152 L38 206 L58 206 L74 174 Z" fill="#0A0A14" stroke="#F2B84B" stroke-width="1"/>
+    <path d="M156 140 L186 152 L192 206 L172 206 L156 174 Z" fill="#0A0A14" stroke="#F2B84B" stroke-width="1"/>
+    <!-- Gold wrist guards -->
+    <rect x="38" y="201" width="20" height="8" rx="3" fill="#0A0A14" stroke="#F2B84B" stroke-width="1.5"/>
+    <rect x="172" y="201" width="20" height="8" rx="3" fill="#0A0A14" stroke="#F2B84B" stroke-width="1.5"/>
+    <!-- Legendary sparkles -->
+    <text x="42" y="155" font-size="11" fill="#F2B84B" font-family="sans-serif" opacity="0.85">✦</text>
+    <text x="170" y="151" font-size="11" fill="#A78BFA" font-family="sans-serif" opacity="0.85">✦</text>
+    <text x="40" y="197" font-size="11" fill="#45D6C4" font-family="sans-serif" opacity="0.7">✦</text>
+    <text x="174" y="197" font-size="11" fill="#F2B84B" font-family="sans-serif" opacity="0.7">✦</text>
+    <text x="56" y="246" font-size="9" fill="#A78BFA" font-family="sans-serif" opacity="0.55">⚡</text>
+    <text x="162" y="246" font-size="9" fill="#F2B84B" font-family="sans-serif" opacity="0.55">⚡</text>
+    <!-- LEG ARMOR -->
+    <rect x="78" y="242" width="34" height="111" rx="3" fill="#080810"/>
+    <rect x="118" y="242" width="34" height="111" rx="3" fill="#080810"/>
+    <!-- Gold leg trim -->
+    <line x1="78" y1="242" x2="78" y2="353" stroke="#F2B84B" stroke-width="1.5" opacity="0.85"/>
+    <line x1="152" y1="242" x2="152" y2="353" stroke="#F2B84B" stroke-width="1.5" opacity="0.85"/>
+    <!-- Gold belt plate -->
+    <rect x="80" y="236" width="70" height="10" rx="2" fill="#0A0A14" stroke="#F2B84B" stroke-width="1.5"/>
+    <rect x="108" y="237" width="14" height="8" rx="2" fill="#F2B84B"/>
+    <rect x="110" y="239" width="10" height="4" rx="1" fill="#1a0a00"/>
+    <!-- Leg runes -->
+    <line x1="82" y1="272" x2="108" y2="272" stroke="#F2B84B" stroke-width="0.8" opacity="0.42"/>
+    <line x1="122" y1="272" x2="148" y2="272" stroke="#F2B84B" stroke-width="0.8" opacity="0.42"/>
+    <!-- Greaves -->
+    <rect x="82" y="308" width="28" height="44" rx="4" fill="#0A0A14" stroke="#F2B84B" stroke-width="1"/>
+    <rect x="120" y="308" width="28" height="44" rx="4" fill="#0A0A14" stroke="#F2B84B" stroke-width="1"/>
+    <!-- LEGENDARY GOLD BOOTS -->
+    <ellipse cx="96" cy="363" rx="26" ry="12" fill="#0A0800"/>
+    <ellipse cx="134" cy="363" rx="26" ry="12" fill="#0A0800"/>
+    <ellipse cx="96" cy="365" rx="26" ry="8" fill="#060500"/>
+    <ellipse cx="134" cy="365" rx="26" ry="8" fill="#060500"/>
+    <path d="M72 362 Q96 353 120 362" stroke="#F2B84B" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M110 362 Q134 353 158 362" stroke="#F2B84B" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <circle cx="72" cy="362" r="2" fill="#F2B84B" opacity="0.8"/>
+    <circle cx="120" cy="362" r="2" fill="#F2B84B" opacity="0.8"/>
+  `,
+  weapon: `
+    <!-- LEGENDARY STAFF -->
+    <!-- Pole -->
+    <rect x="200" y="148" width="8" height="200" rx="4" fill="#1a0800"/>
+    <line x1="202" y1="148" x2="202" y2="345" stroke="#F2B84B" stroke-width="1" opacity="0.65"/>
+    <line x1="205" y1="148" x2="205" y2="345" stroke="#A78BFA" stroke-width="0.6" opacity="0.38"/>
+    <!-- Mid ring -->
+    <rect x="197" y="228" width="14" height="5" rx="2" fill="#0A0A14" stroke="#F2B84B" stroke-width="1"/>
+    <!-- Bottom spike + glow -->
+    <polygon points="200,346 208,346 204,362" fill="#F2B84B" opacity="0.9"/>
+    <ellipse cx="204" cy="362" rx="5" ry="8" fill="#F2B84B" opacity="0.22"/>
+    <!-- Orb housing -->
+    <circle cx="204" cy="130" r="26" fill="#0A0A14" stroke="#F2B84B" stroke-width="1.5"/>
+    <!-- Orb layers (bright core) -->
+    <circle cx="204" cy="130" r="22" fill="#1a0d2e"/>
+    <circle cx="204" cy="130" r="17" fill="#2D1B6E"/>
+    <circle cx="204" cy="130" r="12" fill="#A78BFA"/>
+    <circle cx="204" cy="130" r="7" fill="#C4B5FD"/>
+    <circle cx="204" cy="130" r="3.5" fill="white" opacity="0.95"/>
+    <!-- Inner sparkle cross -->
+    <line x1="204" y1="112" x2="204" y2="148" stroke="rgba(255,255,255,0.35)" stroke-width="0.8"/>
+    <line x1="186" y1="130" x2="222" y2="130" stroke="rgba(255,255,255,0.35)" stroke-width="0.8"/>
+    <!-- ORBITING RINGS (CSS-animated) -->
+    <g class="orbit-ring">
+      <ellipse cx="204" cy="130" rx="28" ry="10" fill="none" stroke="#F2B84B" stroke-width="1.8" opacity="0.8"/>
+    </g>
+    <g class="orbit-ring-2">
+      <ellipse cx="204" cy="130" rx="10" ry="28" fill="none" stroke="#45D6C4" stroke-width="1.8" opacity="0.8"/>
+    </g>
+    <!-- Orb aura -->
+    <circle cx="204" cy="130" r="36" fill="#A78BFA" opacity="0.06"/>
+    <circle cx="204" cy="130" r="44" fill="#F2B84B" opacity="0.04"/>
+    <!-- Ground glow -->
+    <ellipse cx="204" cy="366" rx="26" ry="5" fill="#F2B84B" opacity="0.18"/>
+  `
+}
+
+]; /* end TIERS */
+
+/* ============================================================
+   MOUNT FUNCTION
+   Called by Part 3 whenever tier changes.
+   ============================================================ */
+function mountCharacter(tier) {
+  const t = TIERS[Math.max(0, Math.min(tier, 5))];
+  const svg = `
+<svg viewBox="0 0 280 380" xmlns="http://www.w3.org/2000/svg"
+     style="width:100%;max-width:280px;overflow:visible;display:block">
+  <g class="char-idle">
+    ${t.back}
+    ${t.body}
+    ${CHAR_BASE}
+    ${t.headFx}
+  </g>
+  <g class="weapon-group">${t.weapon}</g>
+</svg>`;
+  const el = document.getElementById('charSvgMount');
+  if (el) el.innerHTML = svg;
+}
+
+/* Expose globally for Part 3 */
+window.mountCharacter = mountCharacter;
+
+/* Initialize tier 0 on DOM ready */
+document.addEventListener('DOMContentLoaded', function () {
+  mountCharacter(0);
+});
+
+</script>
+<script>
+/* ============================================================
+   PART 3 OF 3 — LOGIC & DATA INTERFACE
+   Reads stats via URL params, postMessage, or window.HERO_DATA.
+   Drives all DOM updates, tier switching, and level-up effects.
+
+   HOW TO CONNECT FROM NEXT.JS:
+   ─────────────────────────────
+   Option A — postMessage (iframe):
+     const iframe = document.querySelector('#hero-frame');
+     iframe.contentWindow.postMessage({
+       type: 'HERO_UPDATE',
+       stats: { xp, dsaSolved, aiCompleted, letbexCompleted, streak, overallPct }
+     }, '*');
+
+   Option B — direct function call (iframe):
+     iframe.contentWindow.updateHeroStats({ xp: 330, dsaSolved: 12, ... });
+
+   Option C — URL params (iframe src):
+     <iframe src="/character-profile.html?xp=330&dsa=12&ai=3&letbex=2&streak=1&pct=12" />
+
+   Option D — global before page loads:
+     window.HERO_DATA = { xp: 330, dsaSolved: 12, ... };
+
+   Stat keys: xp (0-3070), dsaSolved (0-99), aiCompleted (0-47),
+              letbexCompleted (0-24), streak (days), overallPct (0-100)
+   ============================================================ */
+
+/* ── Level table (mirrors tracker) ───────────────────────── */
+const LEVELS = [
+  { xp:    0, title:"Bootcamp Grad",         icon:"🌱", tier:0 },
+  { xp:  150, title:"Array Slinger",         icon:"🔢", tier:1 },
+  { xp:  350, title:"Pointer Wizard",        icon:"👉", tier:1 },
+  { xp:  600, title:"Binary Search Sensei",  icon:"🔍", tier:2 },
+  { xp:  900, title:"List Untangler",        icon:"🔗", tier:2 },
+  { xp: 1250, title:"ReAct Apprentice",      icon:"🤖", tier:3 },
+  { xp: 1650, title:"Graph Whisperer",       icon:"🕸️", tier:3 },
+  { xp: 2000, title:"Agent Architect",       icon:"🛠️", tier:4 },
+  { xp: 2350, title:"Heap Lord",             icon:"⛰️", tier:4 },
+  { xp: 2700, title:"DP Tactician",          icon:"♟️", tier:5 },
+  { xp: 3070, title:"Staff Engineer",        icon:"🏆", tier:5 },
+];
+
+const TIER_NAMES = [
+  "Fresh Graduate",
+  "Junior Dev",
+  "AI Builder",
+  "Agent Architect",
+  "Hacker Elite",
+  "Staff Engineer",
+];
+
+const TOTAL_XP = 3070;
+
+/* ── Missions (one per level 0-10) ───────────────────────── */
+const MISSIONS = [
+  { week:1,  text:"Complete Week 1 — Arrays & Hashing. Every problem reduces to 'can I avoid the nested loop with a hashmap?' Don't skip Kadane's — it shows up everywhere." },
+  { week:2,  text:"Two Pointers & Sliding Window. Minimum Window Substring is the hard gate this week — give it 30 full minutes. Keep 10 Letbex DMs going daily." },
+  { week:3,  text:"Binary Search — it's not just sorted arrays. Koko Eating Bananas is the reframe: search the answer space. RAG pipeline ingestion starts now." },
+  { week:4,  text:"Linked Lists + LRU Cache (your first LLD preview). Finish 'Chat with your PDF' and get it deployed to Vercel — first AI portfolio piece." },
+  { week:5,  text:"AGENTIC AI BEGINS. Lighter DSA this week on purpose. Learn tool use + ReAct pattern. This is the highest-demand specialization in India for 2026." },
+  { week:6,  text:"Multi-tool agent — add Tavily search + summarize. Run it on a real question. Keep a short log of what the agent does right and wrong — you'll need it for evals." },
+  { week:7,  text:"Deploy Agent v1 with retry/backoff and a step cap. This is your flagship AI portfolio project. Make the README count — interviewers look at it." },
+  { week:8,  text:"Evals + observability. Write 8-10 test cases in promptfoo. Set up LangSmith tracing. By Sunday you should have a pass/fail report for Agent v1." },
+  { week:9,  text:"Agent v2: Upstash rate limiting, token cost tracking, all evals green. This build is interview-ready. Begin scoping the Letbex AI FAQ feature." },
+  { week:10, text:"DP intro + build the AI FAQ assistant for Vipul. Embed client FAQs in your vector store (reuse Week 3-4 RAG). Test with 10+ real visitor questions before demo." },
+  { week:12, text:"System Design — 5 HLD + 3 LLD. URL Shortener → Rate Limiter → Feed → WhatsApp → Uber. Schedule 4 mock interviews on Pramp. Final portfolio audit. You made it." },
+];
+
+/* ── Next-unlock milestones ───────────────────────────────── */
+const UNLOCKS = [
+  { xp:  150, icon:"🔢", title:"LV 2 — Array Slinger",         sub:"Navy hoodie + floating keyboard unlock" },
+  { xp:  350, icon:"👉", title:"LV 3 — Pointer Wizard",        sub:"Two Pointers mastered — Sliding Window next" },
+  { xp:  600, icon:"🔍", title:"LV 4 — Binary Search Sensei",  sub:"Purple hoodie + glowing laptop unlocks" },
+  { xp:  900, icon:"🔗", title:"LV 5 — List Untangler",        sub:"RAG pipeline shipped, LRU Cache cracked" },
+  { xp: 1250, icon:"🤖", title:"LV 6 — ReAct Apprentice",      sub:"Agentic AI begins — black tech jacket unlocks" },
+  { xp: 1650, icon:"🕸️", title:"LV 7 — Graph Whisperer",      sub:"Agent v1 deployed — flagship AI project live" },
+  { xp: 2000, icon:"🛠️", title:"LV 8 — Agent Architect",      sub:"Tactical suit + holographic sword unlocks" },
+  { xp: 2350, icon:"⛰️", title:"LV 9 — Heap Lord",            sub:"Agent v2 with evals + guardrails shipped" },
+  { xp: 2700, icon:"♟️", title:"LV 10 — DP Tactician",        sub:"Letbex AI feature live — legendary tier begins" },
+  { xp: 3070, icon:"🏆", title:"LV 11 — Staff Engineer",      sub:"Legendary armor + staff. Roadmap complete." },
+];
+
+/* ── Runtime state ────────────────────────────────────────── */
+let _currentTier    = -1;
+let _currentLevelIdx = -1;
+let _isFirstRender  = true;
+
+/* ── Helpers ──────────────────────────────────────────────── */
+function $id(id) { return document.getElementById(id); }
+
+function setText(id, text) {
+  const el = $id(id);
+  if (el) el.textContent = text;
+}
+
+function setHTML(id, html) {
+  const el = $id(id);
+  if (el) el.innerHTML = html;
+}
+
+function getLevelInfo(xp) {
+  let idx = 0;
+  for (let i = 0; i < LEVELS.length; i++) {
+    if (xp >= LEVELS[i].xp) idx = i;
+    else break;
+  }
+  const cur  = LEVELS[idx];
+  const next = LEVELS[idx + 1] || null;
+  const xpIn = next ? xp - cur.xp : 0;
+  const xpFor = next ? next.xp - cur.xp : 1;
+  const pctFull = (xp / TOTAL_XP) * 100;
+  return { idx, cur, next, xpToNext: next ? next.xp - xp : 0, pctFull };
+}
+
+function getNextUnlock(xp) {
+  for (const u of UNLOCKS) {
+    if (xp < u.xp) return { ...u, remaining: u.xp - xp };
+  }
+  return { xp: TOTAL_XP, icon:"🏆", title:"Maximum level reached!", sub:"You've unlocked everything.", remaining: 0 };
+}
+
+function getMission(levelIdx) {
+  const idx = Math.max(0, Math.min(levelIdx, MISSIONS.length - 1));
+  return MISSIONS[idx];
+}
+
+/* ── Animated counter ─────────────────────────────────────── */
+function animNum(el, from, to, ms) {
+  if (!el || from === to) { if (el) el.textContent = to; return; }
+  const start = performance.now();
+  (function step(now) {
+    const t = Math.min(1, (now - start) / ms);
+    const eased = 1 - Math.pow(1 - t, 3);
+    el.textContent = Math.round(from + (to - from) * eased);
+    if (t < 1) requestAnimationFrame(step);
+  })(start);
+}
+
+/* ── Level-up effect ──────────────────────────────────────── */
+function fireLevelUp(newTitle, newIcon) {
+  const flash  = $id('lvlFlash');
+  const banner = $id('lvlBanner');
+
+  if (flash) {
+    flash.classList.remove('firing');
+    void flash.offsetWidth;
+    flash.classList.add('firing');
+  }
+  if (banner) {
+    setText('lvlBannerTitle', newIcon + '  Level Up!');
+    setText('lvlBannerSub', 'You reached ' + newTitle);
+    banner.classList.remove('show');
+    void banner.offsetWidth;
+    banner.classList.add('show');
+    setTimeout(() => banner.classList.remove('show'), 3200);
+  }
+}
+
+/* ── Tier / character switch ──────────────────────────────── */
+function switchTier(newTier) {
+  const page  = $id('page');
+  const panel = $id('charPanel');
+  const isSameTier = newTier === _currentTier;
+
+  if (!isSameTier && panel && !_isFirstRender) {
+    /* Fade out → swap SVG → fade back in */
+    panel.style.transition = 'opacity 0.35s ease';
+    panel.style.opacity = '0';
+    setTimeout(() => {
+      if (window.mountCharacter) window.mountCharacter(newTier);
+      if (page) page.dataset.tier = String(newTier);
+      panel.style.opacity = '1';
+    }, 360);
+  } else {
+    if (window.mountCharacter) window.mountCharacter(newTier);
+    if (page) page.dataset.tier = String(newTier);
+  }
+  _currentTier = newTier;
+}
+
+/* ── Stat bar helper ──────────────────────────────────────── */
+function setStat(valId, barId, value, total) {
+  const valEl = $id(valId);
+  const barEl = $id(barId);
+  if (valEl) valEl.innerHTML = value + ' <em>/ ' + total + '</em>';
+  if (barEl) setTimeout(() => {
+    barEl.style.width = Math.min(100, value / total * 100).toFixed(1) + '%';
+  }, 130);
+}
+
+/* ============================================================
+   MAIN UPDATE FUNCTION
+   Call this any time stats change.
+   ============================================================ */
+function updateStats(raw) {
+  raw = raw || {};
+
+  /* Clamp inputs */
+  const xp             = Math.max(0, Math.min(TOTAL_XP, parseInt(raw.xp)             || 0));
+  const dsaSolved      = Math.max(0, Math.min(99,       parseInt(raw.dsaSolved)       || 0));
+  const aiCompleted    = Math.max(0, Math.min(47,       parseInt(raw.aiCompleted)     || 0));
+  const letbexCompleted = Math.max(0, Math.min(24,      parseInt(raw.letbexCompleted) || 0));
+  const streak         = Math.max(0, parseInt(raw.streak) || 0);
+  const overallPct     = raw.overallPct != null
+                          ? parseFloat(raw.overallPct)
+                          : parseFloat((xp / TOTAL_XP * 100).toFixed(1));
+
+  /* Derived */
+  const lvl    = getLevelInfo(xp);
+  const unlock = getNextUnlock(xp);
+  const mission = getMission(lvl.idx);
+  const newTier = lvl.cur.tier;
+  const didLevelUp = !_isFirstRender && lvl.idx > _currentLevelIdx;
+
+  /* Level-up animation */
+  if (didLevelUp) {
+    setTimeout(() => fireLevelUp(lvl.cur.title, lvl.cur.icon), 420);
+  }
+
+  /* Tier + character SVG */
+  switchTier(newTier);
+
+  /* ── Top bar ── */
+  setText('lvIcon',   lvl.cur.icon);
+  setText('lvNum',    'LV ' + (lvl.idx + 1));
+  setText('lvTitle',  lvl.cur.title);
+  setText('streakVal', streak);
+
+  /* ── Character nameplate ── */
+  setText('charTierTitle', TIER_NAMES[newTier]);
+  setText('charLvBadge',   'LV ' + (lvl.idx + 1) + ' / 11');
+
+  /* ── XP block ── */
+  const xpEl = $id('xpEarned');
+  if (xpEl) animNum(xpEl, parseInt(xpEl.textContent) || 0, xp, 900);
+  const xpFill = $id('xpFill');
+  if (xpFill) setTimeout(() => { xpFill.style.width = lvl.pctFull.toFixed(1) + '%'; }, 80);
+  setText('xpLvLabel', 'LV ' + (lvl.idx + 1) + ' — ' + lvl.cur.title);
+  setText('xpToNext',  lvl.next
+    ? lvl.xpToNext + ' XP to LV ' + (lvl.idx + 2)
+    : 'Maximum level achieved ✦');
+
+  /* ── Stat cards ── */
+  setStat('dsaVal', 'dsaBar', dsaSolved,       99);
+  setStat('aiVal',  'aiBar',  aiCompleted,     47);
+  setStat('lbVal',  'lbBar',  letbexCompleted, 24);
+  const pctEl  = $id('pctVal');
+  const pctBar = $id('pctBar');
+  if (pctEl)  pctEl.innerHTML  = overallPct.toFixed(0) + '<em>%</em>';
+  if (pctBar) setTimeout(() => { pctBar.style.width = overallPct.toFixed(1) + '%'; }, 150);
+
+  /* ── Next unlock ── */
+  setText('unlockIcon',  unlock.icon);
+  setText('unlockTitle', unlock.title);
+  setText('unlockSub',   unlock.sub);
+  setText('unlockXP',    unlock.remaining > 0
+    ? '+' + unlock.remaining + ' XP away'
+    : 'Unlocked ✓');
+
+  /* ── Active quest ── */
+  setText('missionText', mission.text);
+  setText('missionWk',   'W' + mission.week);
+
+  /* Persist state */
+  _currentLevelIdx = lvl.idx;
+  _isFirstRender   = false;
+}
+
+/* ============================================================
+   DATA INTERFACE
+   ============================================================ */
+
+/* 1. URL params — ?xp=330&dsa=12&ai=3&letbex=2&streak=1&pct=12 */
+function readUrlParams() {
+  try {
+    const p = new URLSearchParams(window.location.search);
+    if (!p.get('xp') && !p.get('dsa') && !p.get('level')) return null;
+    return {
+      xp:              parseInt(p.get('xp'))     || 0,
+      dsaSolved:       parseInt(p.get('dsa'))    || 0,
+      aiCompleted:     parseInt(p.get('ai'))     || 0,
+      letbexCompleted: parseInt(p.get('letbex')) || 0,
+      streak:          parseInt(p.get('streak')) || 0,
+      overallPct:      parseFloat(p.get('pct'))  || 0,
+    };
+  } catch (_) { return null; }
+}
+
+/* 2. postMessage from parent Next.js frame */
+window.addEventListener('message', function(e) {
+  if (e.data && e.data.type === 'HERO_UPDATE' && e.data.stats) {
+    updateStats(e.data.stats);
+  }
+});
+
+/* 3. Direct call from parent frame */
+window.updateHeroStats = updateStats;
+
+/* 4. window.HERO_DATA set by parent before or after load */
+function checkGlobal() {
+  if (window.HERO_DATA) { updateStats(window.HERO_DATA); return true; }
+  return false;
+}
+
+/* ── Init ──────────────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', function() {
+  /* Wait for Part 2's mountCharacter to be available */
+  function init() {
+    const params = readUrlParams();
+    if (params) {
+      updateStats(params);
+    } else if (!checkGlobal()) {
+      /* Default: fresh start / demo mode */
+      updateStats({ xp:0, dsaSolved:0, aiCompleted:0, letbexCompleted:0, streak:0, overallPct:0 });
+    }
+
+    /* Poll for HERO_DATA set after load (e.g. parent sets it 100ms later) */
+    let polls = 0;
+    const poll = setInterval(function() {
+      polls++;
+      if (window.HERO_DATA) { clearInterval(poll); updateStats(window.HERO_DATA); }
+      if (polls >= 10) clearInterval(poll); /* stop after 5 seconds */
+    }, 500);
+  }
+
+  if (window.mountCharacter) {
+    init();
+  } else {
+    /* mountCharacter not ready yet — wait one tick */
+    setTimeout(init, 0);
+  }
+});
+
+</script>
+</body>
+</html>
