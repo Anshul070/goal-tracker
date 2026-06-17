@@ -7,6 +7,7 @@ import {
   checkAchievements,
   ACHIEVEMENTS,
   Stats,
+  RevisionItem,
 } from "../components/roadmapData";
 import Header from "../components/Header";
 import Tabs from "../components/Tabs";
@@ -30,6 +31,7 @@ export default function Page() {
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [activeTab, setActiveTab] = useState<string | number>("dashboard");
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const [revisions, setRevisions] = useState<RevisionItem[]>([]);
   const [isHydrated, setIsHydrated] = useState(false);
 
   // Load state on mount
@@ -52,6 +54,7 @@ export default function Page() {
             if (localData.completed) setCompleted(localData.completed);
             if (localData.activity) setActivity(localData.activity);
             if (localData.notes) setNotes(localData.notes);
+            if (localData.revisions) setRevisions(localData.revisions);
             
             // Sync to MongoDB
             await fetch("/api/progress", {
@@ -60,13 +63,15 @@ export default function Page() {
               body: JSON.stringify({
                 completed: localData.completed || {},
                 activity: localData.activity || {},
-                notes: localData.notes || {}
+                notes: localData.notes || {},
+                revisions: localData.revisions || [],
               }),
             });
           } else {
             if (data.completed) setCompleted(data.completed);
             if (data.activity) setActivity(data.activity);
             if (data.notes) setNotes(data.notes);
+            if (data.revisions) setRevisions(data.revisions);
           }
         } else {
           // Fallback to localStorage on API error
@@ -76,6 +81,7 @@ export default function Page() {
             if (parsed.completed) setCompleted(parsed.completed);
             if (parsed.activity) setActivity(parsed.activity);
             if (parsed.notes) setNotes(parsed.notes);
+            if (parsed.revisions) setRevisions(parsed.revisions);
           }
         }
       } catch (e) {
@@ -87,6 +93,7 @@ export default function Page() {
           if (parsed.completed) setCompleted(parsed.completed);
           if (parsed.activity) setActivity(parsed.activity);
           if (parsed.notes) setNotes(parsed.notes);
+          if (parsed.revisions) setRevisions(parsed.revisions);
         }
       } finally {
         setIsHydrated(true);
@@ -106,14 +113,21 @@ export default function Page() {
   const saveProgress = async (
     nextCompleted: Record<string, boolean>,
     nextActivity: Record<string, number>,
-    nextNotes?: Record<string, string>
+    nextNotes?: Record<string, string>,
+    nextRevisions?: RevisionItem[]
   ) => {
     const activeNotes = nextNotes !== undefined ? nextNotes : notes;
+    const activeRevisions = nextRevisions !== undefined ? nextRevisions : revisions;
     // Save to local storage for quick sync/offline backup
     try {
       localStorage.setItem(
         STORAGE_KEY,
-        JSON.stringify({ completed: nextCompleted, activity: nextActivity, notes: activeNotes })
+        JSON.stringify({
+          completed: nextCompleted,
+          activity: nextActivity,
+          notes: activeNotes,
+          revisions: activeRevisions,
+        })
       );
     } catch (e) {
       console.error("Failed to save to localStorage", e);
@@ -124,7 +138,12 @@ export default function Page() {
       await fetch("/api/progress", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ completed: nextCompleted, activity: nextActivity, notes: activeNotes }),
+        body: JSON.stringify({
+          completed: nextCompleted,
+          activity: nextActivity,
+          notes: activeNotes,
+          revisions: activeRevisions,
+        }),
       });
     } catch (e) {
       console.error("Failed to save progress to MongoDB", e);
@@ -198,12 +217,59 @@ export default function Page() {
     saveProgress(completed, activity, nextNotes);
   };
 
+  const handleAddRevision = (label: string, weekNum: number) => {
+    const newItem: RevisionItem = {
+      id: Math.random().toString(36).substring(2, 9),
+      label,
+      weekNum,
+      addedAt: new Date().toISOString(),
+      status: "pending",
+    };
+    const nextRevisions = [newItem, ...revisions];
+    setRevisions(nextRevisions);
+    saveProgress(completed, activity, notes, nextRevisions);
+    showToast(`Added to revision queue`);
+  };
+
+  const handleToggleRevisionStatus = (id: string) => {
+    const nextRevisions = revisions.map((r) => {
+      if (r.id === id) {
+        const nextStatus: "pending" | "revised" = r.status === "pending" ? "revised" : "pending";
+        return {
+          ...r,
+          status: nextStatus,
+          revisedAt: nextStatus === "revised" ? new Date().toISOString() : undefined,
+        };
+      }
+      return r;
+    });
+    setRevisions(nextRevisions);
+    saveProgress(completed, activity, notes, nextRevisions);
+
+    const item = revisions.find((r) => r.id === id);
+    if (item) {
+      if (item.status === "pending") {
+        showToast(`Marked as revised!`);
+      } else {
+        showToast(`Restored to queue`);
+      }
+    }
+  };
+
+  const handleDeleteRevision = (id: string) => {
+    const nextRevisions = revisions.filter((r) => r.id !== id);
+    setRevisions(nextRevisions);
+    saveProgress(completed, activity, notes, nextRevisions);
+    showToast(`Topic deleted`);
+  };
+
   const handleReset = () => {
     if (confirm("Reset all progress? This cannot be undone.")) {
       setCompleted({});
       setActivity({});
       setNotes({});
-      saveProgress({}, {}, {});
+      setRevisions([]);
+      saveProgress({}, {}, {}, []);
       showToast("Progress reset");
     }
   };
@@ -230,6 +296,10 @@ export default function Page() {
             completed={completed}
             activity={activity}
             setActiveTab={setActiveTab}
+            revisions={revisions}
+            onAddRevision={handleAddRevision}
+            onToggleRevisionStatus={handleToggleRevisionStatus}
+            onDeleteRevision={handleDeleteRevision}
           />
         )}
         {activeTab === "ach" && (

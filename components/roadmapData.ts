@@ -39,6 +39,15 @@ export interface Achievement {
   desc: string;
 }
 
+export interface RevisionItem {
+  id: string;
+  label: string;
+  weekNum: number;
+  addedAt: string;
+  revisedAt?: string;
+  status: "pending" | "revised";
+}
+
 export interface TaskFlat {
   id: string;
   weekNum: number;

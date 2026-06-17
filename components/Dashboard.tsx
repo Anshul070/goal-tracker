@@ -1,16 +1,30 @@
 import React from "react";
-import { Stats, LEVELS, ROADMAP, ALL_TASKS, getLevel } from "./roadmapData";
+import { Stats, LEVELS, ROADMAP, ALL_TASKS, getLevel, RevisionItem } from "./roadmapData";
 import Heatmap from "./Heatmap";
 import RoadmapCharts from "./RoadmapCharts";
+import RevisionPlanner from "./RevisionPlanner";
 
 interface DashboardProps {
   stats: Stats;
   completed: Record<string, boolean>;
   activity: Record<string, number>;
   setActiveTab: (tab: string | number) => void;
+  revisions: RevisionItem[];
+  onAddRevision: (label: string, weekNum: number) => void;
+  onToggleRevisionStatus: (id: string) => void;
+  onDeleteRevision: (id: string) => void;
 }
 
-export default function Dashboard({ stats, completed, activity, setActiveTab }: DashboardProps) {
+export default function Dashboard({
+  stats,
+  completed,
+  activity,
+  setActiveTab,
+  revisions,
+  onAddRevision,
+  onToggleRevisionStatus,
+  onDeleteRevision,
+}: DashboardProps) {
   const lvl = getLevel(stats.earnedXP);
 
   // Find next uncompleted task
@@ -80,6 +94,14 @@ export default function Dashboard({ stats, completed, activity, setActiveTab }: 
           </div>
         </div>
       )}
+
+      {/* Revision Planner Card Block */}
+      <RevisionPlanner
+        revisions={revisions}
+        onAddRevision={onAddRevision}
+        onToggleRevisionStatus={onToggleRevisionStatus}
+        onDeleteRevision={onDeleteRevision}
+      />
 
       {/* Heatmap Section */}
       <div className="section-title">
