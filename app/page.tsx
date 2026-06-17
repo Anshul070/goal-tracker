@@ -42,37 +42,76 @@ export default function Page() {
         if (res.ok) {
           const data = await res.json();
           
+          // Load progress from DB
+          const dbCompleted = data.completed || {};
+          const dbActivity = data.activity || {};
+          const dbNotes = data.notes || {};
+          const dbRevisions = data.revisions || [];
+
           // Read local storage data
           const saved = localStorage.getItem(STORAGE_KEY);
           const localData = saved ? JSON.parse(saved) : null;
-          
-          const dbIsEmpty = !data.completed || Object.keys(data.completed).length === 0;
-          const localHasData = localData && localData.completed && Object.keys(localData.completed).length > 0;
-          
-          if (dbIsEmpty && localHasData) {
-            // Migrate local storage progress to MongoDB
-            if (localData.completed) setCompleted(localData.completed);
-            if (localData.activity) setActivity(localData.activity);
-            if (localData.notes) setNotes(localData.notes);
-            if (localData.revisions) setRevisions(localData.revisions);
-            
-            // Sync to MongoDB
+          const localCompleted = localData?.completed || {};
+          const localActivity = localData?.activity || {};
+          const localNotes = localData?.notes || {};
+          const localRevisions = localData?.revisions || [];
+
+          // Merge completed tasks
+          const mergedCompleted = { ...localCompleted, ...dbCompleted };
+
+          // Merge activity history (taking max value for each day)
+          const mergedActivity = { ...localActivity };
+          Object.keys(dbActivity).forEach((day) => {
+            mergedActivity[day] = Math.max(mergedActivity[day] || 0, dbActivity[day]);
+          });
+
+          // Merge notes (recover local notes missing in DB)
+          const mergedNotes = { ...localNotes, ...dbNotes };
+
+          // Merge revisions by ID
+          const mergedRevisions = [...dbRevisions];
+          localRevisions.forEach((lr: RevisionItem) => {
+            if (!mergedRevisions.some((dr) => dr.id === lr.id)) {
+              mergedRevisions.push(lr);
+            }
+          });
+
+          // Update state with merged data
+          setCompleted(mergedCompleted);
+          setActivity(mergedActivity);
+          setNotes(mergedNotes);
+          setRevisions(mergedRevisions);
+
+          // If there were local changes not in DB, sync them back
+          const hasLocalChanges = 
+            Object.keys(mergedCompleted).length > Object.keys(dbCompleted).length ||
+            Object.keys(mergedNotes).length > Object.keys(dbNotes).length ||
+            mergedRevisions.length > dbRevisions.length;
+
+          if (hasLocalChanges) {
+            console.log("Syncing merged local changes back to MongoDB...");
             await fetch("/api/progress", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
-                completed: localData.completed || {},
-                activity: localData.activity || {},
-                notes: localData.notes || {},
-                revisions: localData.revisions || [],
+                completed: mergedCompleted,
+                activity: mergedActivity,
+                notes: mergedNotes,
+                revisions: mergedRevisions,
               }),
             });
-          } else {
-            if (data.completed) setCompleted(data.completed);
-            if (data.activity) setActivity(data.activity);
-            if (data.notes) setNotes(data.notes);
-            if (data.revisions) setRevisions(data.revisions);
           }
+          
+          // Save merged data back to localStorage for quick offline access
+          localStorage.setItem(
+            STORAGE_KEY,
+            JSON.stringify({
+              completed: mergedCompleted,
+              activity: mergedActivity,
+              notes: mergedNotes,
+              revisions: mergedRevisions,
+            })
+          );
         } else {
           // Fallback to localStorage on API error
           const saved = localStorage.getItem(STORAGE_KEY);
