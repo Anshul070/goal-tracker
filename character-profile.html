@@ -636,6 +636,21 @@ svg { display: block; }
 .avatar-emoji {
   user-select: none;
 }
+.avatar-unlock-info {
+  margin-top: 12px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-dim);
+  text-align: center;
+  min-height: 16px;
+  transition: color 0.3s ease;
+}
+.avatar-unlock-info.locked-info {
+  color: var(--gold);
+}
+.avatar-unlock-info.unlocked-info {
+  color: var(--teal);
+}
 </style>
 </head>
 <body>
@@ -691,6 +706,7 @@ svg { display: block; }
           <div class="avatar-slots" id="avatarSlots">
             <!-- Slots will be injected dynamically -->
           </div>
+          <div class="avatar-unlock-info" id="avatarUnlockInfo">Select an avatar to equip. Hover to preview.</div>
         </div>
       </div>
 
@@ -1517,11 +1533,13 @@ const SafeStorage = {
   }
 };
 
-function getTierUnlockXp(tier) {
-  for (const lvl of LEVELS) {
-    if (lvl.tier === tier) return lvl.xp;
+function getTierUnlockInfo(tier) {
+  for (let i = 0; i < LEVELS.length; i++) {
+    if (LEVELS[i].tier === tier) {
+      return `LV ${i + 1} — ${LEVELS[i].title} (${LEVELS[i].xp} XP)`;
+    }
   }
-  return 0;
+  return "Max Level";
 }
 
 window.persistentPreviewTier = null;
@@ -1543,6 +1561,12 @@ function revertPersistentPreview() {
   switchTier(currentEquipped);
   setText('charTierTitle', TIER_NAMES[currentEquipped]);
   document.removeEventListener('click', revertPersistentPreview);
+
+  const infoEl = $id('avatarUnlockInfo');
+  if (infoEl) {
+    infoEl.textContent = "Select an avatar to equip. Hover to preview.";
+    infoEl.className = "avatar-unlock-info";
+  }
 }
 
 function renderAvatarSlots(maxUnlocked, equipped) {
@@ -1563,7 +1587,8 @@ function renderAvatarSlots(maxUnlocked, equipped) {
     const isLocked = av.tier > maxUnlocked;
     const isEquipped = av.tier === equipped;
     const className = `avatar-slot${isLocked ? ' locked' : ''}${isEquipped ? ' active' : ''}`;
-    const tooltip = isLocked ? `Locked: Unlocks at ${getTierUnlockXp(av.tier)} XP` : `${av.title}${isEquipped ? ' (Equipped)' : ''}`;
+    const unlockStr = getTierUnlockInfo(av.tier);
+    const tooltip = isLocked ? `Locked: Unlocks at ${unlockStr}` : `${av.title}${isEquipped ? ' (Equipped)' : ''}`;
 
     html += `
       <button class="${className}" data-tier="${av.tier}" title="${tooltip}">
@@ -1579,12 +1604,24 @@ function renderAvatarSlots(maxUnlocked, equipped) {
   container.querySelectorAll('.avatar-slot').forEach(btn => {
     const tier = parseInt(btn.getAttribute('data-tier'));
     const isLocked = btn.classList.contains('locked');
+    const av = AVATARS.find(a => a.tier === tier) || { title: "Avatar" };
 
     // Hover Enter
     btn.addEventListener('mouseenter', function() {
       if (window.persistentPreviewTier !== undefined && window.persistentPreviewTier !== null) return;
       switchTier(tier);
       setText('charTierTitle', TIER_NAMES[tier] + " (Preview)");
+
+      const infoEl = $id('avatarUnlockInfo');
+      if (infoEl) {
+        if (isLocked) {
+          infoEl.textContent = `🔒 Previews only. Unlocks at ${getTierUnlockInfo(tier)}`;
+          infoEl.className = 'avatar-unlock-info locked-info';
+        } else {
+          infoEl.textContent = `✨ Unlocked: Click to equip ${av.title}`;
+          infoEl.className = 'avatar-unlock-info unlocked-info';
+        }
+      }
     });
 
     // Hover Leave
@@ -1593,6 +1630,12 @@ function renderAvatarSlots(maxUnlocked, equipped) {
       const currentEquipped = parseInt(SafeStorage.getItem('equipped_tier')) || 0;
       switchTier(currentEquipped);
       setText('charTierTitle', TIER_NAMES[currentEquipped]);
+
+      const infoEl = $id('avatarUnlockInfo');
+      if (infoEl) {
+        infoEl.textContent = "Select an avatar to equip. Hover to preview.";
+        infoEl.className = 'avatar-unlock-info';
+      }
     });
 
     // Click / Tap (handles mobile too)
@@ -1600,13 +1643,23 @@ function renderAvatarSlots(maxUnlocked, equipped) {
       e.preventDefault();
       e.stopPropagation();
 
+      const infoEl = $id('avatarUnlockInfo');
+
       if (isLocked) {
         // Locked: Enter persistent preview mode (especially for mobile)
         enterPersistentPreview(tier);
+        if (infoEl) {
+          infoEl.textContent = `🔒 Previewing: Unlocks at ${getTierUnlockInfo(tier)}`;
+          infoEl.className = 'avatar-unlock-info locked-info';
+        }
       } else {
         // Unlocked: Equip avatar
         revertPersistentPreview();
         selectAvatar(tier);
+        if (infoEl) {
+          infoEl.textContent = `Equipped ${av.title}!`;
+          infoEl.className = 'avatar-unlock-info unlocked-info';
+        }
       }
     });
   });
